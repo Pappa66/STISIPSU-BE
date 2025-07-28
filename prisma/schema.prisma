@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+enum UserRole {
+  MAHASISWA
+  DOSEN
+  ADMIN
+}
+
+// untuk visibilitas
+enum VisibilityStatus {
+  PUBLISHED // Tampil untuk publik
+  PRIVATE   // Hanya tampil untuk user terotentikasi (Dosen, Mahasiswa ybs, Admin)
+}
+
+// Status baru untuk proses approval oleh dosen
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MenuType {
+  INTERNAL
+  EXTERNAL
+  STATIC_PATH
+}
+
+// --- ENUM UNTUK JENIS POSTINGAN ---
+enum PostType {
+  PAGE    // Untuk halaman statis seperti 'Tentang Kami'
+  NEWS    // Untuk artikel berita atau pengumuman dinamis
+}
+
+// --- MODELS ---
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  password     String
+  role         UserRole @default(MAHASISWA)
+  userCode     String   @unique
+
+  // Fields for Mahasiswa
+  studyProgram String?
+  npm          String?  @db.VarChar(10)
+  entryYear    Int?
+
+  // Fields for Dosen
+  npd          String?  @db.VarChar(18) // Nomor Pokok Dosen
+
+  posts        Post[]
+  
+  // --- PERBAIKAN RELASI AMBIGU ---
+  // Relasi untuk item yang di-upload oleh user ini
+  uploadedItems RepositoryItem[] @relation("ItemsByUploader")
+  // Relasi untuk item yang dibimbing oleh user ini (jika Dosen)
+  advisedItems  RepositoryItem[] @relation("ItemsByAdvisor")
+  // -------------------------------
+
+  // Relasi untuk bimbingan
+  mahasiswaBimbingan Bimbingan[] @relation("DosenPembimbing")
+  dosenPembimbing    Bimbingan[] @relation("MahasiswaBimbingan")
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Bimbingan {
+  id          String   @id @default(cuid())
+  
+  dosen       User     @relation("DosenPembimbing", fields: [dosenId], references: [id], onDelete: Cascade)
+  dosenId     String
+
+  mahasiswa   User     @relation("MahasiswaBimbingan", fields: [mahasiswaId], references: [id], onDelete: Cascade)
+  mahasiswaId String
+
+  createdAt   DateTime @default(now())
+
+  @@unique([dosenId, mahasiswaId])
+}
+
+model RepositoryItem {
+  id             String   @id @default(cuid())
+  title          String
+  author         String
+  year           Int
+  studyProgram   String
+  abstract       String?  @db.Text
+  keywords       String?
+  
+  // --- PERBAIKAN RELASI AMBIGU ---
+  // Relasi ke Dosen Pembimbing
+  advisorId      String?
+  advisor        User?    @relation("ItemsByAdvisor", fields: [advisorId], references: [id], onDelete: SetNull)
+  
+  // Relasi ke Mahasiswa/User yang mengunggah
+  uploaderId     String
+  uploader       User     @relation("ItemsByUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  // -------------------------------
+
+  visibility     VisibilityStatus @default(PRIVATE)
+  approvalStatus ApprovalStatus   @default(PENDING)
+  rejectionReason String?
+
+  publishedAt    DateTime?
+  showDownloadsToPublic Boolean @default(false)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  files          FileItem[]
+}
+
+model FileItem {
+  id               String         @id @default(cuid())
+  alias            String
+  fileName         String
+  fileUrl          String
+  repositoryItemId String
+  repositoryItem   RepositoryItem @relation(fields: [repositoryItemId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id               String    @id @default(cuid())
+  title            String
+  isPublished      Boolean   @default(false)
+  type             PostType  @default(PAGE)
+  
+  // --- PENAMBAHAN FIELD BARU UNTUK TAGS ---
+  tags             String[]  @default([]) // Menyimpan tag sebagai array of string
+
+  blocks           Json?
+  author           User      @relation(fields: [authorId], references: [id])
+  authorId         String
+  menuItem         MenuItem?
+  submenuItem      SubMenuItem?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  slug             String?   @unique
+  featuredImageUrl String?
+  galleryImages    GalleryImage[]
+}
+
+
+model MenuItem {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  order     Int           @default(0)
+  createdAt DateTime      @default(now())
+  type      MenuType      @default(INTERNAL)
+  href      String?
+  post      Post?         @relation(fields: [postId], references: [id], onDelete: SetNull)
+  postId    String?       @unique
+  submenus  SubMenuItem[]
+}
+
+model SubMenuItem {
+  id         String   @id @default(cuid())
+  name       String
+  order      Int      @default(0)
+  type       MenuType @default(INTERNAL)
+  href       String?
+  post       Post?    @relation(fields: [postId], references: [id], onDelete: SetNull)
+  postId     String?  @unique
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+}
+
+// --- MODEL UNTUK GAMBAR GALERI ---
+model GalleryImage {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  imageUrl    String
+  order       Int      @default(0)
+
+  // --- DUA BARIS INI UNTUK RELASI KE BERITA ---
+  postId      String?   // ID postingan berita yang terhubung (opsional)
+  post        Post?     @relation(fields: [postId], references: [id], onDelete: SetNull)
+  // ---------------------------------------------------
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// --- FIELD UNTUK KONTAK ---
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique // Kunci unik, misal: "contact_info"
+  value     Json     // Nilai akan disimpan dalam format JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+// --- BAGIAN UNTUK PENGUMUMAN ---
+enum AnnouncementType {
+  TEXT
+  IMAGE
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String   // Judul pengumuman (hanya untuk referensi admin)
+
+  type      AnnouncementType // TEXT atau IMAGE
+  content   String?  @db.Text
+  imageUrl  String?
+
+  isActive  Boolean  @default(false) // Untuk mengatur apakah pop-up ditampilkan
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
