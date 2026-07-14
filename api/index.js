@@ -24,6 +24,9 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// === Health Check ===
+app.get('/api/health', (req, res) => res.json({ status: 'ok', node: process.version }));
+
 // === Vercel-specific overrides (registered first, so they take priority) ===
 const { protect } = require('../src/middleware/authMiddleware');
 const upload = require('./upload');
