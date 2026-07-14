@@ -22,6 +22,7 @@
     "express-rate-limit": "^7.5.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
+    "@supabase/supabase-js": "^2.49.4",
     "slugify": "^1.6.6",
     "xlsx": "^0.18.5"
   },
