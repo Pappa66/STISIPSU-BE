@@ -14,6 +14,7 @@ enum UserRole {
   ADMIN
 }
 
+
 // untuk visibilitas
 enum VisibilityStatus {
   PUBLISHED // Tampil untuk publik
@@ -96,6 +97,7 @@ model RepositoryItem {
   studyProgram   String
   abstract       String?  @db.Text
   keywords       String?
+  views           Int        @default(0)
   
   // --- PERBAIKAN RELASI AMBIGU ---
   // Relasi ke Dosen Pembimbing
@@ -124,6 +126,7 @@ model FileItem {
   alias            String
   fileName         String
   fileUrl          String
+  downloads        Int            @default(0)
   repositoryItemId String
   repositoryItem   RepositoryItem @relation(fields: [repositoryItemId], references: [id], onDelete: Cascade)
 }
@@ -200,6 +203,19 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+
+// --- BAGIAN UNTUK BANNER SLIDER ---
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String?
+  imageUrl  String
+  linkUrl   String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 // --- BAGIAN UNTUK PENGUMUMAN ---
 enum AnnouncementType {

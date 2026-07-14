@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/app.js",
-    "start": "node src/app.js"
+    "start": "node src/app.js",
+    "postinstall": "prisma generate",
+    "migrate": "prisma migrate deploy",
+    "seed": "node prisma/seed.js"
   },
   "keywords": [],
   "author": "",

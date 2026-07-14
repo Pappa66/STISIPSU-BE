@@ -79,6 +79,10 @@ const getPostById = async (req, res, next) => {
     if (!post) {
       return res.status(404).json({ message: "Postingan tidak ditemukan" });
     }
+    // Jika tidak dipublish, hanya admin yang bisa lihat
+    if (!post.isPublished && (!req.user || req.user.role !== "ADMIN")) {
+      return res.status(404).json({ message: "Postingan tidak ditemukan" });
+    }
     res.json(post);
   } catch (error) {
     next(error);

@@ -127,7 +127,7 @@ const loginUser = async (req, res, next) => {
             const token = jwt.sign(
                 { userId: user.id, role: user.role, name: user.name, userCode: user.userCode },
                 process.env.JWT_SECRET,
-                { expiresIn: '24h' }
+                { expiresIn: '1h' }
             );
             res.json({ token });
         } else {
@@ -326,6 +326,24 @@ const getSubmissionPrerequisites = async (req, res, next) => {
 };
 
 // --- EXPORT SEMUA FUNGSI ---
+const getPublicLecturers = async (req, res, next) => {
+    try {
+        const lecturers = await prisma.user.findMany({
+            where: { role: 'DOSEN' },
+            select: { id: true, name: true, npd: true, userCode: true, email: true },
+            orderBy: { name: 'asc' },
+        });
+        const formatted = lecturers.map((l) => ({
+            id: l.id,
+            name: l.name,
+            nidn: l.npd || '-',
+            userCode: l.userCode,
+            email: l.email,
+        }));
+        res.json(formatted);
+    } catch (error) { next(error); }
+};
+
 module.exports = { 
     loginUser, 
     createUser, 
@@ -339,4 +357,5 @@ module.exports = {
     getAdmins,
     getLecturers,
     getStudents,
+    getPublicLecturers,
 };

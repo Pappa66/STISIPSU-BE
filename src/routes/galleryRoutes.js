@@ -5,7 +5,7 @@ const {
     uploadGalleryImages,
     updateGalleryImage,
     deleteGalleryImage,
-    reorderGalleryImages,
+    //reorderGalleryImages,
 } = require('../controllers/galleryController');
 const { protect, isAdmin } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware'); // Asumsi Anda punya middleware upload
@@ -14,7 +14,7 @@ const upload = require('../middleware/uploadMiddleware'); // Asumsi Anda punya m
 router.get('/', getGalleryImages);
 
 // Rute untuk mengurutkan ulang (khusus admin)
-router.put('/reorder', protect, isAdmin, reorderGalleryImages);
+//router.put('/reorder', protect, isAdmin, reorderGalleryImages);
 
 // Rute untuk upload gambar baru (khusus admin)
 // 'galleryImages' adalah nama field, 10 adalah batas maksimal file per upload

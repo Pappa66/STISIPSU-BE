@@ -3,49 +3,44 @@
 const express = require('express');
 const router = express.Router();
 
-// Impor semua fungsi yang diperlukan dari controller
 const { 
-    getPublicRepositoryItems,
-    getAllRepositoryItemsForAdmin,
-    createRepositoryItem, 
-    updateRepositoryItem, 
-    deleteRepositoryItem, 
-    getRepositoryItemById, 
-    addFilesToRepositoryItem,
-    deleteFileItem
-    } = require('../controllers/repositoryController');   
+  getPublicRepositoryItems,
+  getAllRepositoryItemsForAdmin,
+  createRepositoryItem, 
+  updateRepositoryItem, 
+  deleteRepositoryItem, 
+  getRepositoryItemById, 
+  addFilesToRepositoryItem,
+  deleteFileItem,
+  getRepositoryStats,
+  incrementRepositoryViews
+} = require('../controllers/repositoryController');   
 
 const { protect, isAdmin } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
-// ==========================================
-// RUTE UNTUK HALAMAN PUBLIK (Tidak perlu login)
-// ==========================================
+// === PENTING: ROUTE YANG SPESIFIK TARUH DI ATAS
+router.get("/stats", getRepositoryStats);                
+router.patch("/:id/views", incrementRepositoryViews);
 
-router.route('/')
-    .get(getPublicRepositoryItems);
+// === Route Publik
+router.route("/")
+  .get(getPublicRepositoryItems)
+  .post(protect, isAdmin, upload.array('files', 10), createRepositoryItem);
 
+router.route("/admin/all")
+  .get(protect, isAdmin, getAllRepositoryItemsForAdmin);
+
+router.route("/:id/files")
+  .post(protect, isAdmin, upload.array('files', 10), addFilesToRepositoryItem);
+
+router.route("/files/:fileId")
+  .delete(protect, isAdmin, deleteFileItem);
+
+// === Route Dinamis HARUS DITARUH PALING BAWAH
 router.route('/:id')
-    .get(getRepositoryItemById);
+  .get(getRepositoryItemById)
+  .put(protect, isAdmin, updateRepositoryItem)
+  .delete(protect, isAdmin, deleteRepositoryItem);
 
-// ==========================================
-// RUTE UNTUK DASBOR ADMIN (Perlu login & hak akses admin)
-// ==========================================
-
-router.route('/')
-    .post(protect, isAdmin, upload.array('files', 10), createRepositoryItem);
-
-router.route('/admin/all')
-    .get(protect, isAdmin, getAllRepositoryItemsForAdmin);
-
-router.route('/:id')
-    .put(protect, isAdmin, updateRepositoryItem)
-    .delete(protect, isAdmin, deleteRepositoryItem);
-
-router.route('/:id/files')
-    .post(protect, isAdmin, upload.array('files', 10), addFilesToRepositoryItem);
-
-router.route('/files/:fileId')
-    .delete(protect, isAdmin, deleteFileItem);
-    
 module.exports = router;

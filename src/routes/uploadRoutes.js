@@ -10,7 +10,16 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s/g, '_')}`)
 });
 
-const upload = multer({ storage }); // Anda bisa menambahkan fileFilter di sini nanti
+const fileFilter = (req, file, cb) => {
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/webm'];
+    if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Format file tidak diizinkan! Hanya PDF, Gambar, dan Video.'), false);
+    }
+};
+
+const upload = multer({ storage, fileFilter, limits: { fileSize: 1024 * 1024 * 10 } });
 
 router.post('/', protect, upload.single('upload'), (req, res) => {
     if (!req.file) {

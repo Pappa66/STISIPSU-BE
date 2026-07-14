@@ -8,4 +8,4 @@ RUN npm install
 COPY . .
 
 EXPOSE 3001
-CMD ["node", "app.js"]  # atau ganti jadi app.js kalau itu entry point kamu
+CMD ["node", "src/app.js"]

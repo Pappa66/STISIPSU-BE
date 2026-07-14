@@ -59,4 +59,12 @@ const isAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, isAdmin };
+const isLecturer = (req, res, next) => {
+  if (req.user && (req.user.role === "DOSEN" || req.user.role === "ADMIN")) {
+    next();
+  } else {
+    res.status(403).json({ message: "Akses ditolak, hanya untuk Dosen" });
+  }
+};
+
+module.exports = { protect, isAdmin, isLecturer };

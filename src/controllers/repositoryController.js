@@ -8,11 +8,24 @@ const path = require("path");
 // --- FUNGSI UNTUK HALAMAN PUBLIK ---
 const getPublicRepositoryItems = async (req, res, next) => {
   try {
+    const { year, studyProgram, search } = req.query;
+    const whereClause = {
+      visibility: "PUBLISHED",
+      approvalStatus: "APPROVED",
+    };
+
+    if (year) whereClause.year = parseInt(year);
+    if (studyProgram) whereClause.studyProgram = studyProgram;
+    if (search) {
+      whereClause.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { author: { contains: search, mode: "insensitive" } },
+        { keywords: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
     const items = await prisma.repositoryItem.findMany({
-      where: {
-        visibility: "PUBLISHED",
-        approvalStatus: "APPROVED",
-      },
+      where: whereClause,
       orderBy: { publishedAt: "desc" },
       select: {
         id: true,
@@ -23,22 +36,25 @@ const getPublicRepositoryItems = async (req, res, next) => {
         showDownloadsToPublic: true,
         publishedAt: true,
         createdAt: true,
+        views: true,
         abstract: true,
         files: {
           select: {
+            id: true,
+            alias: true,
             fileUrl: true,
+            downloads: true,
           },
-          take: 1,
         },
       },
     });
 
-    // Format ulang data agar lebih mudah digunakan di frontend
     const formattedItems = items.map((item) => ({
       ...item,
-      // Membuat properti fileUrl level atas dari array files
       fileUrl: item.files.length > 0 ? item.files[0].fileUrl : null,
-      files: undefined, // Hapus array files yang tidak lagi dibutuhkan
+      fileId: item.files.length > 0 ? item.files[0].id : null,
+      totalDownloads: item.files.reduce((sum, f) => sum + f.downloads, 0),
+      files: undefined,
     }));
 
     res.status(200).json(formattedItems);
@@ -91,7 +107,7 @@ const getRepositoryItemById = async (req, res, next) => {
     const item = await prisma.repositoryItem.findUnique({
       where: { id },
       include: {
-        files: true,
+        files: { select: { id: true, alias: true, fileUrl: true, downloads: true } },
         uploader: { select: { name: true } },
         advisor: { select: { name: true } },
       },
@@ -112,6 +128,26 @@ const getRepositoryItemById = async (req, res, next) => {
 
     res.json(item);
   } catch (error) {
+    next(error);
+  }
+};
+
+// PATCH /api/repository-items/:id/views
+const incrementRepositoryViews = async (req, res, next) => {
+  const { id } = req.params;
+  console.log("📥 PATCH view diterima untuk ID:", id);
+
+  try {
+    const updated = await prisma.repositoryItem.update({
+      where: { id },
+      data: { views: { increment: 1 } },
+      select: { views: true },
+    });
+
+    console.log("✅ View berhasil ditambah jadi:", updated.views);
+    res.status(200).json({ views: updated.views });
+  } catch (error) {
+    console.error("❌ ERROR saat update views:", error.message);
     next(error);
   }
 };
@@ -253,6 +289,57 @@ const deleteRepositoryItem = async (req, res, next) => {
   }
 };
 
+console.log("?? Mencoba ambil statistik repo");
+
+const getRepositoryStats = async (req, res, next) => {
+  try {
+    console.log("?? Querying data...");
+    const [totalRepositories, totalFiles, totalUsers, items] =
+      await Promise.all([
+        prisma.repositoryItem.count({
+          where: {
+            visibility: "PUBLISHED",
+            approvalStatus: "APPROVED",
+          },
+        }),
+        prisma.fileItem.count(),
+        prisma.user.count(),
+        prisma.repositoryItem.findMany({
+          where: {
+            visibility: "PUBLISHED",
+            approvalStatus: "APPROVED",
+          },
+          select: { author: true },
+        }),
+      ]);
+
+    console.log("?? totalRepositories:", totalRepositories);
+    console.log("?? totalFiles:", totalFiles);
+    console.log("?? totalUsers:", totalUsers);
+    console.log("?? totalItems:", items.length);
+
+    const authorsSet = new Set(
+      items.map((item) =>
+        typeof item.author === "string"
+          ? item.author.trim()
+          : item.author?.name?.trim()
+      ).filter(Boolean)
+    );
+
+    const totalAuthors = authorsSet.size;
+
+    return res.status(200).json({
+      totalRepositories,
+      totalFiles,
+      totalUsers,
+      totalAuthors,
+    });
+  } catch (error) {
+    console.error("? Gagal ambil statistik:", error);
+    next(error);
+  }
+};
+
 // --- FUNGSI UNTUK MENAMBAH & MENGHAPUS FILE ---
 const addFilesToRepositoryItem = async (req, res, next) => {
   const { id } = req.params;
@@ -310,5 +397,7 @@ module.exports = {
   updateRepositoryItem,
   deleteRepositoryItem,
   addFilesToRepositoryItem,
+  getRepositoryStats,
   deleteFileItem,
+  incrementRepositoryViews, // ✅ TAMBAHKAN INI
 };

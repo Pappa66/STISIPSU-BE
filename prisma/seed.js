@@ -1,5 +1,6 @@
 // Menggunakan sintaks CommonJS
 const { PrismaClient, PostType, Audience, AnnouncementType } = require('@prisma/client');
+
 const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
@@ -22,7 +23,7 @@ async function main() {
   const hashedPassword = await bcrypt.hash('password123', 10);
   const adminUser = await prisma.user.create({
     data: {
-      email: 'admin@kampus.com',
+      email: 'admin@stisipsu.ac.id',
       name: 'Admin Utama',
       password: hashedPassword,
       role: 'ADMIN',
@@ -125,7 +126,6 @@ async function main() {
       title: 'Pengumuman Selamat Datang (Publik)',
       type: AnnouncementType.TEXT,
       content: 'Selamat datang di website baru STISIP Syamsul \'Ulum! Jelajahi informasi terbaru seputar kampus kami.',
-      targetAudiences: [Audience.PUBLIC],
       isActive: true,
     }
   });

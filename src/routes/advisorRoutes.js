@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, isLecturer } = require('../middleware/authMiddleware');
 
 const { 
     getAdvisedStudentsList,
@@ -26,8 +26,8 @@ const upload = multer({
     }
 });
 
-// --- RUTE TERPROTEKSI ---
-router.use(protect);
+// --- RUTE TERPROTEKSI (hanya Dosen/Admin) ---
+router.use(protect, isLecturer);
 
 // Rute untuk mendapatkan daftar mahasiswa bimbingan
 router.get('/students', getAdvisedStudentsList);

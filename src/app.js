@@ -1,86 +1,84 @@
+// D:\STISIP\STISIPWEB\backend\src\app.js
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
-// Impor Rute
-const menuRoutes = require("./routes/menuRoutes");
-const submenuRoutes = require("./routes/submenuRoutes");
-const postRoutes = require("./routes/postRoutes");
-const pageRoutes = require("./routes/pageRoutes");
-const newsRoutes = require("./routes/newsRoutes");
-const galleryRoutes = require("./routes/galleryRoutes");
-const contactRoutes = require("./routes/contactRoutes");
-const publicContactRoutes = require("./routes/publicContactRoutes");
-const publicRoutes = require("./routes/publicRoutes");
-const userRoutes = require("./routes/userRoutes");
-const repositoryRoutes = require("./routes/repositoryRoutes");
-const authRoutes = require("./routes/authRoutes");
-const advisorRoutes = require("./routes/advisorRoutes");
-const uploadRoutes = require("./routes/uploadRoutes");
-const myRepositoryRoutes = require("./routes/myRepositoryRoutes");
-const announcementRoutes = require("./routes/announcementRoutes");
-const publicAnnouncementRoutes = require("./routes/publicAnnouncementRoutes");
-
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// --- Middleware ---
-
-// 1. CORS (Cross-Origin Resource Sharing)
+// === Middleware ===
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://145.79.8.29:3000",
+  "https://stisipsu.ac.id",            
+"https://www.stisipsu.ac.id",        
+"https://api.stisipsu.ac.id"
+];
 app.use(
   cors({
-    origin: "*", // Untuk development. Ganti dengan URL frontend Anda untuk produksi.
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: function (origin, callback) {
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 
-// 2. Body Parser untuk membaca JSON
 app.use(express.json());
 
-// 3. Static File Server untuk folder 'public'
-// PERBAIKAN: Gunakan '..' untuk keluar dari folder 'src' dan menemukan folder 'public'
+// === Static Public Files ===
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "..", "public/uploads"))
 );
 
-// --- Pendaftaran Rute API ---
-app.use("/api/menu-items", menuRoutes);
-app.use("/api/submenus", submenuRoutes);
-app.use("/api/public", publicRoutes);
-app.use("/api/pages", pageRoutes);
-app.use("/api/posts", postRoutes);
-app.use("/api/news", newsRoutes);
-app.use("/api/gallery", galleryRoutes);
-app.use("/api/contact", contactRoutes);
-app.use("/api/public/contact", publicContactRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/repository-items", repositoryRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/advisor", advisorRoutes);
-app.use("/api/upload", uploadRoutes);
-app.use("/api/my-repository", myRepositoryRoutes);
-app.use("/api/announcements", announcementRoutes);
-app.use("/api/public/announcements", publicAnnouncementRoutes);
+// === Import & Register Routes ===
+app.use("/api/menu-items", require("./routes/menuRoutes"));
+app.use("/api/submenus", require("./routes/submenuRoutes"));
+app.use("/api/public", require("./routes/publicRoutes"));
+app.use("/api/pages", require("./routes/pageRoutes"));
+app.use("/api/posts", require("./routes/postRoutes"));
+app.use("/api/news", require("./routes/newsRoutes"));
+app.use("/api/gallery", require("./routes/galleryRoutes"));
+app.use("/api/contact", require("./routes/contactRoutes"));
+app.use("/api/public/contact", require("./routes/publicContactRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/repository-items", require("./routes/repositoryRoutes"));
+// app.use("/api/auth", require("./routes/authRoutes")); // Dinonaktifkan — pake /api/users/login aja
+app.use("/api/advisor", require("./routes/advisorRoutes"));
+app.use("/api/upload", require("./routes/uploadRoutes"));
+app.use("/api/my-repository", require("./routes/myRepositoryRoutes"));
+app.use("/api/announcements", require("./routes/announcementRoutes"));
+app.use(
+  "/api/public/announcements",
+  require("./routes/publicAnnouncementRoutes")
+);
+app.use("/api/public", require("./routes/publicSearchRoutes"));
+app.use("/api/banners", require("./routes/bannerRoutes"));
+app.use("/api/dashboard", require("./routes/dashboardRoutes"));
+app.use("/api/citation", require("./routes/citationRoutes"));
+app.use("/api/download", require("./routes/downloadRoutes"));
 
-// --- PENANGANAN ERROR TERPUSAT ---
-// Middleware ini akan menangkap semua error yang dilempar oleh `next(error)` di controller
+// === Global Error Handler ===
 app.use((err, req, res, next) => {
-  console.error(err.stack); // Log error di console server
+  console.error(err.stack);
   const statusCode = err.statusCode || 500;
-  const message = err.message || "Terjadi kesalahan internal pada server.";
   res.status(statusCode).json({
     success: false,
-    message,
-    // Tampilkan stack trace hanya saat mode development
+    message: err.message || "Terjadi kesalahan internal pada server.",
     stack: process.env.NODE_ENV === "production" ? null : err.stack,
   });
 });
 
-// --- Menjalankan Server ---
+// === Start Server ===
 app.listen(PORT, () => {
-  console.log(`Server berjalan di http://localhost:${PORT}`);
+  console.log(`✅ Server ready: http://localhost:${PORT}`);
 });
