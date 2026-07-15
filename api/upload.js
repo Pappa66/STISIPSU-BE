@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
+const sharp = require('sharp');
 
 function generateFilename(originalname) {
   const ext = path.extname(originalname);
@@ -8,8 +9,34 @@ function generateFilename(originalname) {
   return `${unique}${ext}`;
 }
 
+async function optimizeImage(buffer, mimetype) {
+  if (!mimetype.startsWith('image/')) return { buffer, mimetype };
+  try {
+    const metadata = await sharp(buffer).metadata();
+    const maxWidth = 1920;
+    const maxHeight = 1080;
+    let width = metadata.width;
+    let height = metadata.height;
+
+    if (width > maxWidth || height > maxHeight) {
+      const ratio = Math.min(maxWidth / width, maxHeight / height);
+      width = Math.round(width * ratio);
+      height = Math.round(height * ratio);
+    }
+
+    const optimized = await sharp(buffer)
+      .resize(width, height, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 80, progressive: true })
+      .toBuffer();
+
+    return { buffer: optimized, mimetype: 'image/jpeg' };
+  } catch (e) {
+    return { buffer, mimetype };
+  }
+}
+
 const fileFilter = (req, file, cb) => {
-  const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+  const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
   if (allowed.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -25,3 +52,4 @@ const upload = multer({
 
 module.exports = upload;
 module.exports.generateFilename = generateFilename;
+module.exports.optimizeImage = optimizeImage;

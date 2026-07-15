@@ -3,7 +3,7 @@ const router = express.Router();
 const { protect, isAdmin } = require('../../src/middleware/authMiddleware');
 const upload = require('../upload');
 const { uploadToSupabase } = require('../../src/utils/storage');
-const { generateFilename } = require('../upload');
+const { generateFilename, optimizeImage } = require('../upload');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -32,8 +32,9 @@ const createRepositoryItem = async (req, res, next) => {
 
     const filesToCreate = await Promise.all(
       files.map(async (file) => {
+        const { buffer, mimetype } = await optimizeImage(file.buffer, file.mimetype);
         const fname = generateFilename(file.originalname);
-        const url = await uploadToSupabase(file.buffer, fname, file.mimetype);
+        const url = await uploadToSupabase(buffer, fname, mimetype);
         const meta = parsedFilesMetadata.find((m) => m.originalName === file.originalname);
         return {
           alias: meta?.alias || file.originalname,
@@ -70,8 +71,9 @@ const addFilesToRepositoryItem = async (req, res, next) => {
     const parsedFilesMetadata = JSON.parse(filesMetadata || '[]');
     const filesToCreate = await Promise.all(
       files.map(async (file) => {
+        const { buffer, mimetype } = await optimizeImage(file.buffer, file.mimetype);
         const fname = generateFilename(file.originalname);
-        const url = await uploadToSupabase(file.buffer, fname, file.mimetype);
+        const url = await uploadToSupabase(buffer, fname, mimetype);
         const meta = parsedFilesMetadata.find((m) => m.originalName === file.originalname);
         return {
           alias: meta?.alias || file.originalname,

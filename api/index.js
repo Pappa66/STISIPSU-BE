@@ -33,7 +33,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', node: process.vers
 const { protect } = require('../src/middleware/authMiddleware');
 const upload = require('./upload');
 const { uploadToSupabase } = require('../src/utils/storage');
-const { generateFilename } = require('./upload');
+const { generateFilename, optimizeImage } = require('./upload');
 
 // Download override
 app.use('/api/download', require('./download'));
@@ -42,8 +42,9 @@ app.use('/api/download', require('./download'));
 app.post('/api/upload', protect, upload.single('upload'), async (req, res, next) => {
   if (!req.file) return res.status(400).json({ message: 'Tidak ada file yang diunggah.' });
   try {
+    const { buffer, mimetype } = await optimizeImage(req.file.buffer, req.file.mimetype);
     const fname = generateFilename(req.file.originalname);
-    const url = await uploadToSupabase(req.file.buffer, fname, req.file.mimetype);
+    const url = await uploadToSupabase(buffer, fname, mimetype);
     res.status(201).json({ message: 'File berhasil diunggah', url });
   } catch (e) { next(e); }
 });
@@ -61,8 +62,9 @@ app.post('/api/gallery/upload', protect, isAdmin, upload.array('galleryImages', 
 
     const images = await Promise.all(
       req.files.map(async (file, index) => {
+        const { buffer, mimetype } = await optimizeImage(file.buffer, file.mimetype);
         const fname = generateFilename(file.originalname);
-        const url = await uploadToSupabase(file.buffer, fname, file.mimetype);
+        const url = await uploadToSupabase(buffer, fname, mimetype);
         return prisma.galleryImage.create({
           data: {
             title: file.originalname.split('.').slice(0, -1).join('.'),
