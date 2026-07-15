@@ -8,6 +8,8 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://stisipsu.ac.id',
   'https://www.stisipsu.ac.id',
+  'https://stisipsu-fe.vercel.app',
+  'https://stisipsu-be.vercel.app',
   'https://stisip-fe.vercel.app',
   'https://stisip-be.vercel.app',
 ];
