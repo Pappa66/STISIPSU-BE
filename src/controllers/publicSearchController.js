@@ -10,6 +10,15 @@ const searchAll = async (req, res, next) => {
     const keyword = q.trim();
 
     try {
+        // Cari juga dari konten blocks via raw SQL (JSONB text search)
+        const blockMatches = await prisma.$queryRaw`
+            SELECT id FROM "Post"
+            WHERE blocks IS NOT NULL
+              AND blocks::text ILIKE ${'%' + keyword + '%'}
+              AND "isPublished" = true
+        `;
+        const blockIds = blockMatches.map(b => b.id);
+
         const [posts, repositories, galleries] = await Promise.all([
             prisma.post.findMany({
                 where: {
@@ -17,6 +26,7 @@ const searchAll = async (req, res, next) => {
                     OR: [
                         { title: { contains: keyword, mode: "insensitive" } },
                         { tags: { has: keyword.toLowerCase() } },
+                        { id: { in: blockIds } },
                     ],
                 },
                 select: { id: true, title: true, slug: true, createdAt: true, type: true },

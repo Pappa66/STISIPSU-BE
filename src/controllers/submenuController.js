@@ -70,10 +70,25 @@ const updateSubMenuItem = async (req, res, next) => {
 
     // Logika untuk membersihkan data berdasarkan tipe link
     if (type === "INTERNAL") {
-      // Jika link internal, pastikan href dihapus dan postId ada
       dataToUpdate.href = null;
       if (postId) {
         dataToUpdate.postId = postId;
+      } else {
+        // Fallback: cari orphaned post dengan nama yang sama
+        const item = await prisma.subMenuItem.findUnique({
+          where: { id },
+          select: { postId: true },
+        });
+        if (!item?.postId) {
+          const orphaned = await prisma.post.findFirst({
+            where: {
+              title: name,
+              menuItem: null,
+              submenuItem: null,
+            },
+          });
+          if (orphaned) dataToUpdate.postId = orphaned.id;
+        }
       }
     } else if (type === "EXTERNAL" || type === "STATIC_PATH") {
       // Jika link eksternal atau statis, hapus postId dan set href

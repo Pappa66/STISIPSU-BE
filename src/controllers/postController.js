@@ -110,7 +110,7 @@ const getPostBySlug = async (req, res, next) => {
 // --- MEMPERBARUI POST ---
 const updatePost = async (req, res, next) => {
   const { id } = req.params;
-  const { title, blocks, slug, featuredImageUrl, isPublished } = req.body;
+  const { title, blocks, slug, featuredImageUrl, isPublished, tags } = req.body;
 
   try {
     const updatedPost = await prisma.post.update({
@@ -120,7 +120,8 @@ const updatePost = async (req, res, next) => {
         blocks,
         slug,
         featuredImageUrl,
-        isPublished, // ✅ tambahkan ini
+        isPublished,
+        tags,
       },
     });
     res.json(updatedPost);

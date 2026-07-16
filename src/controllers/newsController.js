@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 // --- FUNGSI MEMBUAT BERITA BARU ---
 const createNews = async (req, res, next) => {
-    const { title, blocks, slug, featuredImageUrl } = req.body;
+    const { title, blocks, slug, featuredImageUrl, tags } = req.body;
     const authorId = req.user?.userId;
 
     if (!authorId) return res.status(401).json({ message: "Otentikasi gagal." });
@@ -18,7 +18,8 @@ const createNews = async (req, res, next) => {
                 blocks: blocks || [{ id: `heading-${Date.now()}`, type: 'heading', content: title }],
                 type: 'NEWS',
                 isPublished: true,
-                featuredImageUrl
+                featuredImageUrl,
+                tags
             }
         });
 

@@ -5,6 +5,34 @@ async function main() {
   const data = {
     sections: [
       {
+        title: "Program Studi",
+        links: [
+          { label: "Ilmu Administrasi Negara", url: "", isExternal: false },
+          { label: "Ilmu Pemerintahan", url: "", isExternal: false },
+        ],
+      },
+      {
+        title: "Lembaga dan UPT",
+        links: [
+          { label: "Biro Administrasi Akademik", url: "", isExternal: false },
+          { label: "Biro Administrasi Keuangan", url: "", isExternal: false },
+          { label: "Biro Umum dan Kepegawaian", url: "", isExternal: false },
+          { label: "Biro Kemahasiswaan dan Alumni", url: "", isExternal: false },
+          { label: "LPPM", url: "", isExternal: false },
+          { label: "UPT Teknologi Informasi", url: "", isExternal: false },
+          { label: "UPT Pusat Bahasa", url: "", isExternal: false },
+        ],
+      },
+      {
+        title: "Perpustakaan & Publikasi",
+        links: [
+          { label: "Perpustakaan Digital", url: "", isExternal: false },
+          { label: "Open Journal System (OJS)", url: "", isExternal: false },
+          { label: "Karya Tulis Ilmiah Mahasiswa", url: "", isExternal: false },
+          { label: "Repositori Institusi", url: "", isExternal: false },
+        ],
+      },
+      {
         title: "Tautan Lainnya",
         links: [
           { label: "Sistem Informasi Akademik (SIAK)", url: "", isExternal: true },
@@ -25,7 +53,7 @@ async function main() {
     create: { key: "footer_links", value: data },
   });
 
-  console.log("Initial footer links seeded.");
+  console.log("Footer links seeded with all 4 sections.");
   await prisma.$disconnect();
 }
 
