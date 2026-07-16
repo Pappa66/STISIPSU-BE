@@ -50,6 +50,8 @@ app.use("/api/news", require("./routes/newsRoutes"));
 app.use("/api/gallery", require("./routes/galleryRoutes"));
 app.use("/api/contact", require("./routes/contactRoutes"));
 app.use("/api/public/contact", require("./routes/publicContactRoutes"));
+app.use("/api/footer-links", require("./routes/footerRoutes"));
+app.use("/api/public/footer-links", require("./routes/publicFooterRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/repository-items", require("./routes/repositoryRoutes"));
 // app.use("/api/auth", require("./routes/authRoutes")); // Dinonaktifkan — pake /api/users/login aja
