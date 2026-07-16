@@ -99,6 +99,8 @@ app.use('/api/announcements', require('../src/routes/announcementRoutes'));
 app.use('/api/public/announcements', require('../src/routes/publicAnnouncementRoutes'));
 app.use('/api/public/search', require('../src/routes/publicSearchRoutes'));
 app.use('/api/banners', require('../src/routes/bannerRoutes'));
+app.use('/api/footer-links', require('../src/routes/footerRoutes'));
+app.use('/api/public/footer-links', require('../src/routes/publicFooterRoutes'));
 app.use('/api/dashboard', require('../src/routes/dashboardRoutes'));
 app.use('/api/citation', require('../src/routes/citationRoutes'));
 
