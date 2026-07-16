@@ -1,5 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const archiver = require('archiver');
+const https = require('https');
+const http = require('http');
 const prisma = new PrismaClient();
 
 function generateSQLInsert(table, rows) {
@@ -19,10 +21,39 @@ function generateSQLInsert(table, rows) {
   return `-- ${table}: ${rows.length} rows\n\n${lines.join('\n')}\n\n`;
 }
 
+function fetchFile(url) {
+  return new Promise((resolve) => {
+    if (!url || typeof url !== 'string') return resolve(null);
+    const client = url.startsWith('https') ? https : http;
+    client.get(url, { timeout: 30000 }, (res) => {
+      if (res.statusCode !== 200) { res.resume(); return resolve(null); }
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+    }).on('error', () => resolve(null));
+  });
+}
+
+function extractUrls(data) {
+  const urls = [];
+  // FileItems
+  if (data.fileItem) data.fileItem.forEach(f => { if (f.fileUrl) urls.push({ url: f.fileUrl, name: `files/repository/${f.id}_${f.fileName || 'file'}` }); });
+  // Gallery
+  if (data.galleryImage) data.galleryImage.forEach(g => { if (g.imageUrl) urls.push({ url: g.imageUrl, name: `files/gallery/${g.id}_${g.imageUrl.split('/').pop()}` }); });
+  // Banner
+  if (data.banner) data.banner.forEach(b => { if (b.imageUrl) urls.push({ url: b.imageUrl, name: `files/banners/${b.id}_${b.imageUrl.split('/').pop()}` }); });
+  // Post featured images
+  if (data.post) data.post.forEach(p => { if (p.featuredImageUrl) urls.push({ url: p.featuredImageUrl, name: `files/posts/${p.id}_${p.featuredImageUrl.split('/').pop()}` }); });
+  // Announcement images
+  if (data.announcement) data.announcement.forEach(a => { if (a.imageUrl) urls.push({ url: a.imageUrl, name: `files/announcements/${a.id}_${a.imageUrl.split('/').pop()}` }); });
+  return urls;
+}
+
 const exportDatabase = async (req, res, next) => {
   try {
     const year = req.query.year ? parseInt(req.query.year) : null;
     const format = req.query.format || 'json';
+    const includeFiles = req.query.files === 'true';
 
     const yearFilter = year ? { year } : {};
 
@@ -42,11 +73,8 @@ const exportDatabase = async (req, res, next) => {
     const data = {};
 
     for (const table of staticTables) {
-      try {
-        data[table.name] = await prisma[table.prisma].findMany();
-      } catch {
-        data[table.name] = [];
-      }
+      try { data[table.name] = await prisma[table.prisma].findMany(); }
+      catch { data[table.name] = []; }
     }
 
     const repoItems = await prisma.repositoryItem.findMany({
@@ -63,15 +91,13 @@ const exportDatabase = async (req, res, next) => {
     const suffix = year ? `tahun-${year}` : new Date().toISOString().split('T')[0];
 
     if (format === 'json') {
-      const json = JSON.stringify(data, null, 2);
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename=stisipsu-backup-${suffix}.json`);
-      return res.status(200).send(json);
+      return res.status(200).json(data);
     }
 
     if (format === 'sql') {
-      let sql = `-- STISIPSU Database Backup\n-- Generated: ${data._exportedAt}\n-- Year: ${data._year}\n\n`;
-      sql += `BEGIN;\n\n`;
+      let sql = `-- STISIPSU Database Backup\n-- Generated: ${data._exportedAt}\n-- Year: ${data._year}\n\nBEGIN;\n\n`;
       for (const [table, rows] of Object.entries(data)) {
         if (table.startsWith('_')) continue;
         sql += generateSQLInsert(table, rows);
@@ -89,8 +115,10 @@ const exportDatabase = async (req, res, next) => {
       const archive = archiver('zip', { zlib: { level: 9 } });
       archive.pipe(res);
 
+      // Data JSON
       archive.append(JSON.stringify(data, null, 2), { name: `backup-${suffix}.json` });
 
+      // Data SQL
       let sql = `-- STISIPSU Database Backup\n-- Generated: ${data._exportedAt}\n-- Year: ${data._year}\n\nBEGIN;\n\n`;
       for (const [table, rows] of Object.entries(data)) {
         if (table.startsWith('_')) continue;
@@ -98,6 +126,24 @@ const exportDatabase = async (req, res, next) => {
       }
       sql += `COMMIT;\n`;
       archive.append(sql, { name: `backup-${suffix}.sql` });
+
+      // Files from Supabase (optional)
+      if (includeFiles) {
+        const fileUrls = extractUrls(data);
+        const manifest = [];
+        let downloaded = 0;
+        for (const f of fileUrls) {
+          const buf = await fetchFile(f.url);
+          if (buf) {
+            archive.append(buf, { name: f.name });
+            manifest.push({ url: f.url, path: f.name, size: buf.length });
+            downloaded++;
+          } else {
+            manifest.push({ url: f.url, path: f.name, error: 'Gagal diunduh' });
+          }
+        }
+        archive.append(JSON.stringify({ total: fileUrls.length, downloaded, files: manifest }, null, 2), { name: `file_manifest.json` });
+      }
 
       await archive.finalize();
       return;
