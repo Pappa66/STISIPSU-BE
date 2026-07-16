@@ -221,9 +221,10 @@ const updateRepositoryItem = async (req, res, next) => {
     studyProgram,
     abstract,
     keywords,
+    category,
     advisorId,
     visibility,
-    status, // ✅
+    status,
     approvalStatus,
     rejectionReason,
     showDownloadsToPublic,
@@ -236,6 +237,7 @@ const updateRepositoryItem = async (req, res, next) => {
       studyProgram,
       abstract,
       keywords,
+      category: category || null,
       advisorId,
       visibility: status || visibility, // ✅ FIX DISINI
       approvalStatus,

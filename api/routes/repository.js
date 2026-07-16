@@ -19,7 +19,7 @@ const {
 } = require('../../src/controllers/repositoryController');
 
 const createRepositoryItem = async (req, res, next) => {
-  const { title, author, year, studyProgram, abstract, keywords, advisorId, filesMetadata } = req.body;
+  const { title, author, year, studyProgram, abstract, keywords, category, advisorId, filesMetadata } = req.body;
   const files = req.files;
   if (!req.user?.userId) return res.status(401).json({ message: 'Otentikasi gagal.' });
   if (!files || files.length === 0)
@@ -46,7 +46,7 @@ const createRepositoryItem = async (req, res, next) => {
 
     const newItem = await prisma.repositoryItem.create({
       data: {
-        title, author, abstract, keywords,
+        title, author, abstract, keywords, category: category || null,
         year: parsedYear, studyProgram,
         visibility: 'PRIVATE', approvalStatus: 'PENDING',
         advisorId: advisorId || null,
