@@ -114,6 +114,24 @@ const reviewItem = async (req, res, next) => {
                 publishedAt: (approvalStatus === 'APPROVED' && visibility === 'PUBLISHED') ? new Date() : null,
             }
         });
+
+        // Buat notifikasi untuk pengunggah
+        const item = await prisma.repositoryItem.findUnique({
+            where: { id: itemId },
+            select: { uploaderId: true, title: true },
+        });
+        if (item) {
+            const statusLabel = approvalStatus === 'APPROVED' ? 'Disetujui' : 'Revisi';
+            await prisma.notification.create({
+                data: {
+                    userId: item.uploaderId,
+                    title: `Karya ${statusLabel}`,
+                    message: `Karya ilmiah "${item.title}" telah di-${approvalStatus === 'APPROVED' ? 'setujui' : 'minta revisi'} oleh dosen pembimbing.`,
+                    link: '/dashboard/my-repository',
+                },
+            });
+        }
+
         res.status(200).json({ message: `Karya ilmiah berhasil di-${approvalStatus.toLowerCase()}.`, item: updatedItem });
     } catch (error) {
         next(error);

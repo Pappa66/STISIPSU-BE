@@ -68,6 +68,7 @@ app.use("/api/banners", require("./routes/bannerRoutes"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 app.use("/api/citation", require("./routes/citationRoutes"));
 app.use("/api/download", require("./routes/downloadRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 
 // === Global Error Handler ===
 app.use((err, req, res, next) => {

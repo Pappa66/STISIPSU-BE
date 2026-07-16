@@ -103,6 +103,7 @@ app.use('/api/footer-links', require('../src/routes/footerRoutes'));
 app.use('/api/public/footer-links', require('../src/routes/publicFooterRoutes'));
 app.use('/api/dashboard', require('../src/routes/dashboardRoutes'));
 app.use('/api/citation', require('../src/routes/citationRoutes'));
+app.use('/api/notifications', require('../src/routes/notificationRoutes'));
 
 // === Error Handler ===
 app.use((err, req, res, next) => {

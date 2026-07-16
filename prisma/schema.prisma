@@ -71,8 +71,21 @@ model User {
   mahasiswaBimbingan Bimbingan[] @relation("DosenPembimbing")
   dosenPembimbing    Bimbingan[] @relation("MahasiswaBimbingan")
   
+  notifications Notification[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Bimbingan {
