@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 // --- FUNGSI MEMBUAT MENU BARU ---
 const createMenuItem = async (req, res, next) => {
-    const { name } = req.body;
+    const { name, icon } = req.body;
     const authorId = req.user?.userId;
     if (!authorId) {
         return res.status(401).json({ message: "Otentikasi gagal" });
@@ -27,7 +27,7 @@ const createMenuItem = async (req, res, next) => {
             const newOrder = lastMenuItem ? lastMenuItem.order + 1 : 0;
 
             const menuItem = await tx.menuItem.create({
-                data: { name, order: newOrder, postId: newPost.id }
+                data: { name, order: newOrder, postId: newPost.id, icon }
             });
             return menuItem;
         });
@@ -79,9 +79,9 @@ const getMenuItemById = async (req, res, next) => {
 // --- FUNGSI MEMPERBARUI MENU ---
 const updateMenuItem = async (req, res, next) => {
     const { id } = req.params;
-    const { name, type, href } = req.body;
+    const { name, type, href, icon } = req.body;
     try {
-        const dataToUpdate = { name, type, href };
+        const dataToUpdate = { name, type, href, icon };
         if (type === 'INTERNAL') dataToUpdate.href = null;
         else if (type === 'EXTERNAL' || type === 'STATIC_PATH') dataToUpdate.postId = null;
 

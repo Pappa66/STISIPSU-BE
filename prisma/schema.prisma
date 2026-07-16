@@ -160,6 +160,7 @@ model MenuItem {
   createdAt DateTime      @default(now())
   type      MenuType      @default(INTERNAL)
   href      String?
+  icon      String?
   post      Post?         @relation(fields: [postId], references: [id], onDelete: SetNull)
   postId    String?       @unique
   submenus  SubMenuItem[]
@@ -171,6 +172,7 @@ model SubMenuItem {
   order      Int      @default(0)
   type       MenuType @default(INTERNAL)
   href       String?
+  icon       String?
   post       Post?    @relation(fields: [postId], references: [id], onDelete: SetNull)
   postId     String?  @unique
   menuItemId String

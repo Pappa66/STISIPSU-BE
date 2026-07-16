@@ -2,7 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const createSubMenuItem = async (req, res, next) => {
-  const { menuItemId, name } = req.body;
+  const { menuItemId, name, icon } = req.body;
   const authorId = req.user?.userId;
 
   if (!authorId) {
@@ -47,6 +47,7 @@ const createSubMenuItem = async (req, res, next) => {
           order: newOrder,
           menuItemId: menuItemId,
           postId: newPost.id,
+          icon,
         },
       });
 
@@ -63,10 +64,10 @@ const createSubMenuItem = async (req, res, next) => {
 const updateSubMenuItem = async (req, res, next) => {
   const { id } = req.params;
   // Ambil data yang relevan dari body request
-  const { name, type, href, postId } = req.body;
+  const { name, type, href, postId, icon } = req.body;
 
   try {
-    const dataToUpdate = { name, type };
+    const dataToUpdate = { name, type, icon };
 
     // Logika untuk membersihkan data berdasarkan tipe link
     if (type === "INTERNAL") {
