@@ -97,7 +97,7 @@ app.use('/api/users', require('../src/routes/userRoutes'));
 app.use('/api/advisor', require('../src/routes/advisorRoutes'));
 app.use('/api/announcements', require('../src/routes/announcementRoutes'));
 app.use('/api/public/announcements', require('../src/routes/publicAnnouncementRoutes'));
-app.use('/api/public/search', require('../src/routes/publicSearchRoutes'));
+app.use('/api/public', require('../src/routes/publicSearchRoutes'));
 app.use('/api/banners', require('../src/routes/bannerRoutes'));
 app.use('/api/footer-links', require('../src/routes/footerRoutes'));
 app.use('/api/public/footer-links', require('../src/routes/publicFooterRoutes'));
