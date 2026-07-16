@@ -9,7 +9,8 @@ const {
     getStudentSubmissions,
     reviewItem,
     addAdvisedStudent,
-    addAdvisedStudentsFromExcel
+    addAdvisedStudentsFromExcel,
+    assignSecondAdvisor
 } = require('../controllers/advisorController');
 
 // Konfigurasi Multer untuk menangani file Excel di memori
@@ -41,5 +42,8 @@ router.put('/items/:itemId/review', reviewItem);
 // Rute untuk menambah mahasiswa bimbingan
 router.post('/students', addAdvisedStudent);
 router.post('/students/bulk', upload.single('file'), addAdvisedStudentsFromExcel);
+
+// Rute untuk menetapkan penguji kedua
+router.put('/items/:itemId/assign-second-advisor', assignSecondAdvisor);
 
 module.exports = router;

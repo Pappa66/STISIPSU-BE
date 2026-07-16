@@ -13,6 +13,7 @@ const getMyItems = async (req, res, next) => {
       orderBy: { createdAt: "desc" },
       include: {
         advisor: { select: { name: true } },
+        secondAdvisor: { select: { name: true } },
         files: { select: { id: true, alias: true, fileUrl: true } },
       },
     });

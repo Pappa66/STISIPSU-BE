@@ -65,6 +65,7 @@ model User {
   uploadedItems RepositoryItem[] @relation("ItemsByUploader")
   // Relasi untuk item yang dibimbing oleh user ini (jika Dosen)
   advisedItems  RepositoryItem[] @relation("ItemsByAdvisor")
+  secondAdvisedItems RepositoryItem[] @relation("ItemsBySecondAdvisor")
   // -------------------------------
 
   // Relasi untuk bimbingan
@@ -113,9 +114,11 @@ model RepositoryItem {
   views           Int        @default(0)
   
   // --- PERBAIKAN RELASI AMBIGU ---
-  // Relasi ke Dosen Pembimbing
+  // Relasi ke Dosen Pembimbing & Penguji
   advisorId      String?
   advisor        User?    @relation("ItemsByAdvisor", fields: [advisorId], references: [id], onDelete: SetNull)
+  secondAdvisorId String?
+  secondAdvisor  User?    @relation("ItemsBySecondAdvisor", fields: [secondAdvisorId], references: [id], onDelete: SetNull)
   
   // Relasi ke Mahasiswa/User yang mengunggah
   uploaderId     String

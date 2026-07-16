@@ -41,12 +41,36 @@ const getAdvisedStudentsList = async (req, res, next) => {
                 }
             }
         });
+
+        // Juga cari mahasiswa di mana dosen adalah secondAdvisor
+        const secondAdvisedItems = await prisma.repositoryItem.findMany({
+            where: { secondAdvisorId: dosenId },
+            select: { uploaderId: true, uploader: { select: { id: true, name: true, npm: true, userCode: true } } },
+            distinct: ['uploaderId'],
+        });
         
         const students = bimbingan.map(b => ({
             ...b.mahasiswa,
+            role: 'pembimbing',
             pendingItemsCount: b.mahasiswa._count.uploadedItems
         }));
+
+        // Gabungkan dengan second advised students (hindari duplikasi)
+        const existingIds = new Set(bimbingan.map(b => b.mahasiswaId));
+        for (const item of secondAdvisedItems) {
+            if (!existingIds.has(item.uploaderId)) {
+                existingIds.add(item.uploaderId);
+                students.push({
+                    ...item.uploader,
+                    role: 'penguji',
+                    pendingItemsCount: 0,
+                });
+            }
+        }
         
+        // Sort by name
+        students.sort((a, b) => a.name.localeCompare(b.name));
+
         res.status(200).json({
             students,
             currentPage: page,
@@ -70,13 +94,21 @@ const getStudentSubmissions = async (req, res, next) => {
             where: { dosenId_mahasiswaId: { dosenId, mahasiswaId: studentId } }
         });
         if (!isAdvisor) {
-            return res.status(403).json({ message: 'Anda bukan pembimbing mahasiswa ini.' });
+            // Cek apakah dosen ini adalah second advisor dari item manapun milik mahasiswa
+            const isSecondAdvisor = await prisma.repositoryItem.findFirst({
+                where: { uploaderId: studentId, secondAdvisorId: dosenId }
+            });
+            if (!isSecondAdvisor) {
+                return res.status(403).json({ message: 'Anda bukan pembimbing mahasiswa ini.' });
+            }
         }
 
         const items = await prisma.repositoryItem.findMany({
             where: { uploaderId: studentId },
             include: {
-                files: { select: { id: true, alias: true, fileUrl: true } }
+                files: { select: { id: true, alias: true, fileUrl: true } },
+                advisor: { select: { name: true } },
+                secondAdvisor: { select: { name: true } },
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -95,6 +127,7 @@ const getStudentSubmissions = async (req, res, next) => {
 const reviewItem = async (req, res, next) => {
     const { itemId } = req.params;
     const { approvalStatus, rejectionReason, visibility, showDownloadsToPublic } = req.body;
+    const dosenId = req.user.id;
 
     if (!approvalStatus) {
         return res.status(400).json({ message: 'Status persetujuan wajib diisi.' });
@@ -104,6 +137,18 @@ const reviewItem = async (req, res, next) => {
     }
 
     try {
+        // Cek apakah dosen adalah advisor atau second advisor
+        const item = await prisma.repositoryItem.findUnique({
+            where: { id: itemId },
+            select: { advisorId: true, secondAdvisorId: true, uploaderId: true, title: true },
+        });
+        if (!item) {
+            return res.status(404).json({ message: 'Item tidak ditemukan.' });
+        }
+        if (item.advisorId !== dosenId && item.secondAdvisorId !== dosenId) {
+            return res.status(403).json({ message: 'Anda tidak memiliki akses untuk mereview item ini.' });
+        }
+
         const updatedItem = await prisma.repositoryItem.update({
             where: { id: itemId },
             data: {
@@ -116,21 +161,15 @@ const reviewItem = async (req, res, next) => {
         });
 
         // Buat notifikasi untuk pengunggah
-        const item = await prisma.repositoryItem.findUnique({
-            where: { id: itemId },
-            select: { uploaderId: true, title: true },
+        const statusLabel = approvalStatus === 'APPROVED' ? 'Disetujui' : 'Revisi';
+        await prisma.notification.create({
+            data: {
+                userId: item.uploaderId,
+                title: `Karya ${statusLabel}`,
+                message: `Karya ilmiah "${item.title}" telah di-${approvalStatus === 'APPROVED' ? 'setujui' : 'minta revisi'} oleh dosen pembimbing.`,
+                link: '/dashboard/my-repository',
+            },
         });
-        if (item) {
-            const statusLabel = approvalStatus === 'APPROVED' ? 'Disetujui' : 'Revisi';
-            await prisma.notification.create({
-                data: {
-                    userId: item.uploaderId,
-                    title: `Karya ${statusLabel}`,
-                    message: `Karya ilmiah "${item.title}" telah di-${approvalStatus === 'APPROVED' ? 'setujui' : 'minta revisi'} oleh dosen pembimbing.`,
-                    link: '/dashboard/my-repository',
-                },
-            });
-        }
 
         res.status(200).json({ message: `Karya ilmiah berhasil di-${approvalStatus.toLowerCase()}.`, item: updatedItem });
     } catch (error) {
@@ -217,10 +256,41 @@ const addAdvisedStudentsFromExcel = async (req, res, next) => {
     }
 };
 
+/**
+ * @desc    Menetapkan dosen kedua (penguji) untuk sebuah item repository
+ * @route   PUT /api/advisor/items/:itemId/assign-second-advisor
+ * @access  Private (Dosen)
+ */
+const assignSecondAdvisor = async (req, res, next) => {
+    const { itemId } = req.params;
+    const { secondAdvisorId } = req.body;
+    const dosenId = req.user.id;
+
+    try {
+        const item = await prisma.repositoryItem.findUnique({
+            where: { id: itemId },
+            select: { advisorId: true },
+        });
+        if (!item) return res.status(404).json({ message: 'Item tidak ditemukan.' });
+        if (item.advisorId !== dosenId) {
+            return res.status(403).json({ message: 'Hanya pembimbing utama yang bisa menetapkan penguji kedua.' });
+        }
+
+        const updatedItem = await prisma.repositoryItem.update({
+            where: { id: itemId },
+            data: { secondAdvisorId },
+        });
+        res.status(200).json({ message: 'Penguji kedua berhasil ditetapkan.', item: updatedItem });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getAdvisedStudentsList,
     getStudentSubmissions,
     reviewItem,
     addAdvisedStudent,
     addAdvisedStudentsFromExcel,
+    assignSecondAdvisor,
 };

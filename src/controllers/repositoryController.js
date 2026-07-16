@@ -83,6 +83,7 @@ const getAllRepositoryItemsForAdmin = async (req, res, next) => {
       include: {
         uploader: { select: { name: true } },
         advisor: { select: { name: true } },
+        secondAdvisor: { select: { name: true } },
       },
     });
 
@@ -110,6 +111,7 @@ const getRepositoryItemById = async (req, res, next) => {
         files: { select: { id: true, alias: true, fileUrl: true, downloads: true } },
         uploader: { select: { name: true } },
         advisor: { select: { name: true } },
+        secondAdvisor: { select: { name: true } },
       },
     });
     if (!item) {
