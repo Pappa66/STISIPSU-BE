@@ -34,6 +34,7 @@ const createMyItem = async (req, res, next) => {
     studyProgram,
     abstract,
     keywords,
+    category,
     gdriveLink,
     filesMetadata,
   } = req.body;
@@ -88,6 +89,7 @@ const createMyItem = async (req, res, next) => {
         author,
         abstract,
         keywords,
+        category: category || null,
         year: parsedYear,
         studyProgram,
         uploaderId,
@@ -121,6 +123,7 @@ const updateMyItem = async (req, res, next) => {
     studyProgram,
     abstract,
     keywords,
+    category,
     gdriveLink,
     filesMetadata,
   } = req.body;
@@ -196,6 +199,7 @@ const updateMyItem = async (req, res, next) => {
         author,
         abstract,
         keywords,
+        category: category || null,
         year: parsedYear,
         studyProgram,
         approvalStatus: "PENDING",
