@@ -1,5 +1,4 @@
 const { PrismaClient } = require('@prisma/client');
-const archiver = require('archiver');
 const https = require('https');
 const http = require('http');
 const prisma = new PrismaClient();
@@ -109,6 +108,9 @@ const exportDatabase = async (req, res, next) => {
     }
 
     if (format === 'zip') {
+      let archiver;
+      try { archiver = require('archiver'); } catch { return res.status(500).json({ message: 'Modul archiver tidak tersedia.' }); }
+
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename=stisipsu-backup-${suffix}.zip`);
 
@@ -149,6 +151,7 @@ const exportDatabase = async (req, res, next) => {
       return;
     }
 
+    // Format tidak dikenal
     res.status(400).json({ message: 'Format tidak didukung. Gunakan json, sql, atau zip.' });
   } catch (error) {
     next(error);
