@@ -2,6 +2,9 @@
 
 Express + Prisma + PostgreSQL (Neon) backend for STISIP Syamsul Ulum Sukabumi.
 
+Kode ini mendukung dual-mode deployment: **VPS** (self-managed) atau **Vercel** (serverless) tanpa perubahan kode. \
+Awalnya berjalan di VPS (`145.79.8.29:3000`) menggunakan Docker, lalu dimigrasi ke Vercel + Neon + Supabase untuk kemudahan maintenance.
+
 ## Setup
 
 ```bash
