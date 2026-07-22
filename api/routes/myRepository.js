@@ -14,7 +14,7 @@ router.use(protect);
 router.get('/', getMyItems);
 
 router.post('/', upload.array('files', 10), async (req, res, next) => {
-  const { title, author, year, studyProgram, abstract, keywords, gdriveLink, filesMetadata } = req.body;
+  const { title, author, year, studyProgram, abstract, keywords, category, gdriveLink, filesMetadata } = req.body;
   const files = req.files;
   const uploaderId = req.user.id;
 
@@ -60,7 +60,7 @@ router.post('/', upload.array('files', 10), async (req, res, next) => {
 
     const newItem = await prisma.repositoryItem.create({
       data: {
-        title, author, abstract, keywords,
+        title, author, abstract, keywords, category: category || null,
         year: parsedYear, studyProgram,
         uploaderId, advisorId: bimbingan.dosenId,
         approvalStatus: 'PENDING', visibility: 'PRIVATE',
@@ -79,7 +79,7 @@ router.post('/', upload.array('files', 10), async (req, res, next) => {
 
 router.put('/:id', upload.array('files', 10), async (req, res, next) => {
   const { id } = req.params;
-  const { title, author, year, studyProgram, abstract, keywords, gdriveLink, filesMetadata } = req.body;
+  const { title, author, year, studyProgram, abstract, keywords, category, gdriveLink, filesMetadata } = req.body;
   const files = req.files;
 
   try {
@@ -120,7 +120,7 @@ router.put('/:id', upload.array('files', 10), async (req, res, next) => {
     const updatedItem = await prisma.repositoryItem.update({
       where: { id },
       data: {
-        title, author, abstract, keywords,
+        title, author, abstract, keywords, category: category || null,
         year: parsedYear, studyProgram,
         approvalStatus: 'PENDING', rejectionReason: null,
         files: { create: newFiles },
