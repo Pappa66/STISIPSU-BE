@@ -26,8 +26,11 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// === Health Check ===
+// === Health Check (no rate limit) ===
 app.get('/api/health', (req, res) => res.json({ status: 'ok', node: process.version }));
+
+// === Rate Limiting ===
+const { publicLimiter, authLimiter, apiLimiter } = require('../src/middleware/rateLimiter');
 
 // === Vercel-specific overrides (registered first, so they take priority) ===
 const { protect } = require('../src/middleware/authMiddleware');
@@ -80,27 +83,27 @@ app.post('/api/gallery/upload', protect, isAdmin, upload.array('galleryImages', 
 });
 
 // Repository & MyRepository overrides (full route replacements)
-app.use('/api/repository-items', require('./routes/repository'));
+app.use('/api/repository-items', publicLimiter, require('./routes/repository'));
 app.use('/api/my-repository', require('./routes/myRepository'));
 
 // === Original routes (untouched, imported from src/) ===
 app.use('/api/menu-items', require('../src/routes/menuRoutes'));
 app.use('/api/submenus', require('../src/routes/submenuRoutes'));
-app.use('/api/public', require('../src/routes/publicRoutes'));
+app.use('/api/public', publicLimiter, require('../src/routes/publicRoutes'));
 app.use('/api/pages', require('../src/routes/pageRoutes'));
 app.use('/api/posts', require('../src/routes/postRoutes'));
 app.use('/api/news', require('../src/routes/newsRoutes'));
 app.use('/api/gallery', require('../src/routes/galleryRoutes'));
 app.use('/api/contact', require('../src/routes/contactRoutes'));
-app.use('/api/public/contact', require('../src/routes/publicContactRoutes'));
+app.use('/api/public/contact', publicLimiter, require('../src/routes/publicContactRoutes'));
 app.use('/api/users', require('../src/routes/userRoutes'));
 app.use('/api/advisor', require('../src/routes/advisorRoutes'));
 app.use('/api/announcements', require('../src/routes/announcementRoutes'));
-app.use('/api/public/announcements', require('../src/routes/publicAnnouncementRoutes'));
-app.use('/api/public', require('../src/routes/publicSearchRoutes'));
+app.use('/api/public/announcements', publicLimiter, require('../src/routes/publicAnnouncementRoutes'));
+app.use('/api/public', publicLimiter, require('../src/routes/publicSearchRoutes'));
 app.use('/api/banners', require('../src/routes/bannerRoutes'));
 app.use('/api/footer-links', require('../src/routes/footerRoutes'));
-app.use('/api/public/footer-links', require('../src/routes/publicFooterRoutes'));
+app.use('/api/public/footer-links', publicLimiter, require('../src/routes/publicFooterRoutes'));
 app.use('/api/dashboard', require('../src/routes/dashboardRoutes'));
 app.use('/api/citation', require('../src/routes/citationRoutes'));
 app.use('/api/notifications', require('../src/routes/notificationRoutes'));

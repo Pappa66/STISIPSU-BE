@@ -33,6 +33,9 @@ app.use(
 
 app.use(express.json());
 
+// === Rate Limiting ===
+const { publicLimiter } = require("./middleware/rateLimiter");
+
 // === Static Public Files ===
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(
@@ -43,27 +46,27 @@ app.use(
 // === Import & Register Routes ===
 app.use("/api/menu-items", require("./routes/menuRoutes"));
 app.use("/api/submenus", require("./routes/submenuRoutes"));
-app.use("/api/public", require("./routes/publicRoutes"));
+app.use("/api/public", publicLimiter, require("./routes/publicRoutes"));
 app.use("/api/pages", require("./routes/pageRoutes"));
 app.use("/api/posts", require("./routes/postRoutes"));
 app.use("/api/news", require("./routes/newsRoutes"));
 app.use("/api/gallery", require("./routes/galleryRoutes"));
 app.use("/api/contact", require("./routes/contactRoutes"));
-app.use("/api/public/contact", require("./routes/publicContactRoutes"));
+app.use("/api/public/contact", publicLimiter, require("./routes/publicContactRoutes"));
 app.use("/api/footer-links", require("./routes/footerRoutes"));
-app.use("/api/public/footer-links", require("./routes/publicFooterRoutes"));
+app.use("/api/public/footer-links", publicLimiter, require("./routes/publicFooterRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/repository-items", require("./routes/repositoryRoutes"));
+app.use("/api/repository-items", publicLimiter, require("./routes/repositoryRoutes"));
 // app.use("/api/auth", require("./routes/authRoutes")); // Dinonaktifkan — pake /api/users/login aja
 app.use("/api/advisor", require("./routes/advisorRoutes"));
 app.use("/api/upload", require("./routes/uploadRoutes"));
 app.use("/api/my-repository", require("./routes/myRepositoryRoutes"));
 app.use("/api/announcements", require("./routes/announcementRoutes"));
 app.use(
-  "/api/public/announcements",
+  "/api/public/announcements", publicLimiter,
   require("./routes/publicAnnouncementRoutes")
 );
-app.use("/api/public", require("./routes/publicSearchRoutes"));
+app.use("/api/public", publicLimiter, require("./routes/publicSearchRoutes"));
 app.use("/api/banners", require("./routes/bannerRoutes"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 app.use("/api/citation", require("./routes/citationRoutes"));
