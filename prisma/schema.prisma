@@ -73,8 +73,24 @@ model User {
   dosenPembimbing    Bimbingan[] @relation("MahasiswaBimbingan")
   
   notifications Notification[]
+  activityLogs    ActivityLog[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // CREATE, UPDATE, DELETE, LOGIN, REVIEW, ASSIGN, BACKUP, etc.
+  entity    String   // User, RepositoryItem, Post, Banner, GalleryImage, Announcement, etc.
+  entityId  String?
+  details   Json?    // Extra info (title, status, etc.)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Notification {

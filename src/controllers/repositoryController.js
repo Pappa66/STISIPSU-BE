@@ -4,6 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const fs = require("fs").promises;
 const path = require("path");
+const { logActivity } = require("../utils/activityLog");
 
 // --- FUNGSI UNTUK HALAMAN PUBLIK ---
 const getPublicRepositoryItems = async (req, res, next) => {
@@ -137,7 +138,6 @@ const getRepositoryItemById = async (req, res, next) => {
 // PATCH /api/repository-items/:id/views
 const incrementRepositoryViews = async (req, res, next) => {
   const { id } = req.params;
-  console.log("📥 PATCH view diterima untuk ID:", id);
 
   try {
     const updated = await prisma.repositoryItem.update({
@@ -146,10 +146,8 @@ const incrementRepositoryViews = async (req, res, next) => {
       select: { views: true },
     });
 
-    console.log("✅ View berhasil ditambah jadi:", updated.views);
     res.status(200).json({ views: updated.views });
   } catch (error) {
-    console.error("❌ ERROR saat update views:", error.message);
     next(error);
   }
 };
@@ -205,6 +203,7 @@ const createRepositoryItem = async (req, res, next) => {
       },
       include: { files: true },
     });
+    await logActivity(req.user.userId || req.user.id, 'CREATE', 'RepositoryItem', newItem.id, { title: newItem.title });
     res.status(201).json(newItem);
   } catch (error) {
     next(error);
@@ -257,6 +256,7 @@ const updateRepositoryItem = async (req, res, next) => {
       data: dataToUpdate,
     });
 
+    await logActivity(req.user.id, 'UPDATE', 'RepositoryItem', id, { title });
     res.json(item);
   } catch (error) {
     next(error);
@@ -287,6 +287,7 @@ const deleteRepositoryItem = async (req, res, next) => {
       }
       await tx.repositoryItem.delete({ where: { id } });
     });
+    await logActivity(req.user.id, 'DELETE', 'RepositoryItem', id, {});
     res.json({ message: "Item dan file terkait berhasil dihapus" });
   } catch (error) {
     next(error);

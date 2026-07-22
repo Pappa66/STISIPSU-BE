@@ -2,6 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const fs = require("fs");
 const path = require("path");
 const prisma = new PrismaClient();
+const { logActivity } = require("../utils/activityLog");
 
 /**
  * GET /api/my-repository
@@ -102,6 +103,7 @@ const createMyItem = async (req, res, next) => {
       },
     });
 
+    await logActivity(req.user.id, 'CREATE', 'RepositoryItem', newItem.id, { title: newItem.title });
     res.status(201).json({
       message: "Karya ilmiah berhasil diunggah dan dikirim untuk direview.",
       item: newItem,
@@ -213,6 +215,7 @@ const updateMyItem = async (req, res, next) => {
       },
     });
 
+    await logActivity(req.user.id, 'UPDATE', 'RepositoryItem', id, { title });
     res.json({
       message: "Karya ilmiah berhasil diperbarui.",
       item: updatedItem,

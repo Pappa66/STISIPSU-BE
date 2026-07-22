@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { logActivity } = require('../utils/activityLog');
 
 const prisma = new PrismaClient();
 
@@ -156,6 +157,7 @@ const createUser = async (req, res, next) => {
             },
         });
         
+        await logActivity(req.user.id, 'CREATE', 'User', user.id, { name: user.name, role: user.role });
         res.status(201).json({ message: `Pengguna '${user.name}' berhasil dibuat dengan kode: ${user.userCode}`, user });
     } catch (error) {
         if (error.code === 'P2002') return res.status(400).json({ message: 'Email atau Kode Pengguna sudah terdaftar.' });
@@ -176,6 +178,7 @@ const updateUser = async (req, res, next) => {
             data: dataToUpdate,
             select: { id: true, name: true, email: true, role: true, studyProgram: true, npm: true, entryYear: true, userCode: true, npd: true },
         });
+        await logActivity(req.user.id, 'UPDATE', 'User', id, { name: name || '...' });
         res.json(user);
     } catch (error) { next(error); }
 };
@@ -184,6 +187,7 @@ const deleteUser = async (req, res, next) => {
     try {
         if (req.user && id === req.user.userId) return res.status(400).json({ message: 'Tidak dapat menghapus akun sendiri.' });
         await prisma.user.delete({ where: { id } });
+        await logActivity(req.user.id, 'DELETE', 'User', id, {});
         res.json({ message: 'Pengguna berhasil dihapus' });
     } catch (error) { next(error); }
 };
@@ -194,6 +198,7 @@ const resetPassword = async (req, res, next) => {
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         await prisma.user.update({ where: { id }, data: { password: hashedPassword } });
+        await logActivity(req.user.id, 'UPDATE', 'User', id, { action: 'reset_password' });
         res.json({ message: 'Password berhasil direset' });
     } catch (error) { next(error); }
 };
@@ -248,6 +253,7 @@ const bulkCreateUsers = async (req, res, next) => {
         message += `\n${errors.length} data gagal diimpor:\n- ${errors.join('\n- ')}`;
     }
     
+    await logActivity(req.user.id, 'CREATE', 'User', null, { action: 'bulk_import', count: createdCount });
     res.status(201).json({ message });
 };
 const getMyProfile = async (req, res, next) => {

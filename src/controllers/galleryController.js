@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
 const prisma = new PrismaClient();
+const { logActivity } = require('../utils/activityLog');
 
 // --- FUNGSI MENGAMBIL SEMUA GAMBAR GALERI ---
 const getGalleryImages = async (req, res, next) => {
@@ -54,6 +55,7 @@ const uploadGalleryImages = async (req, res, next) => {
         // Jalankan semua operasi pembuatan gambar secara paralel
         await Promise.all(imagePromises);
 
+        await logActivity(req.user.id, 'CREATE', 'GalleryImage', null, { count: req.files.length });
         res.status(201).json({ message: `${req.files.length} gambar berhasil diunggah.` });
     } catch (error) {
         // Tangani error jika terjadi masalah saat mengunggah atau menyimpan ke database
@@ -103,6 +105,7 @@ const deleteGalleryImage = async (req, res, next) => {
             where: { id },
         });
 
+        await logActivity(req.user.id, 'DELETE', 'GalleryImage', id, {});
         res.status(200).json({ message: 'Gambar berhasil dihapus.' }); // Beri respons sukses
     } catch (error) {
         // Tangani error jika terjadi masalah saat menghapus

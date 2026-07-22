@@ -106,6 +106,8 @@ app.use('/api/citation', require('../src/routes/citationRoutes'));
 app.use('/api/notifications', require('../src/routes/notificationRoutes'));
 app.use('/api/backup', require('../src/routes/backupRoutes'));
 
+app.use('/api/activity-logs', require('../src/routes/activityLogRoutes'));
+
 // === Error Handler ===
 app.use((err, req, res, next) => {
   console.error(err.stack);

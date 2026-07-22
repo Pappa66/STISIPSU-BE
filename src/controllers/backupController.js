@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const https = require('https');
 const http = require('http');
 const prisma = new PrismaClient();
+const { logActivity } = require('../utils/activityLog');
 
 function generateSQLInsert(table, rows) {
   if (!rows || rows.length === 0) return `-- ${table}: no data\n\n`;
@@ -90,6 +91,7 @@ const exportDatabase = async (req, res, next) => {
     const suffix = year ? `tahun-${year}` : new Date().toISOString().split('T')[0];
 
     if (format === 'json') {
+      await logActivity(req.user.id, 'BACKUP', 'Database', null, { format, year: year || 'all', includeFiles });
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename=stisipsu-backup-${suffix}.json`);
       return res.status(200).json(data);
@@ -102,6 +104,7 @@ const exportDatabase = async (req, res, next) => {
         sql += generateSQLInsert(table, rows);
       }
       sql += `COMMIT;\n`;
+      await logActivity(req.user.id, 'BACKUP', 'Database', null, { format, year: year || 'all', includeFiles });
       res.setHeader('Content-Type', 'application/sql');
       res.setHeader('Content-Disposition', `attachment; filename=stisipsu-backup-${suffix}.sql`);
       return res.status(200).send(sql);
@@ -111,6 +114,7 @@ const exportDatabase = async (req, res, next) => {
       let archiver;
       try { archiver = require('archiver'); } catch { return res.status(500).json({ message: 'Modul archiver tidak tersedia.' }); }
 
+      await logActivity(req.user.id, 'BACKUP', 'Database', null, { format, year: year || 'all', includeFiles });
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename=stisipsu-backup-${suffix}.zip`);
 

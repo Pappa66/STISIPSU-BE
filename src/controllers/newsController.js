@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { logActivity } = require('../utils/activityLog');
 
 // --- FUNGSI MEMBUAT BERITA BARU ---
 const createNews = async (req, res, next) => {
@@ -34,6 +35,7 @@ const createNews = async (req, res, next) => {
             });
         }
 
+        await logActivity(req.user.id, 'CREATE', 'News', newNewsPost.id, { title: newNewsPost.title, type: newNewsPost.type });
         res.status(201).json(newNewsPost);
     } catch (error) {
         next(error);

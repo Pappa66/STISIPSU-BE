@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const xlsx = require('xlsx');
+const { logActivity } = require('../utils/activityLog');
 
 /**
  * @desc    Mengambil daftar mahasiswa yang dibimbing oleh dosen yang login dengan pagination
@@ -171,6 +172,12 @@ const reviewItem = async (req, res, next) => {
             },
         });
 
+        if (approvalStatus === 'APPROVED') {
+            await logActivity(req.user.id, 'REVIEW', 'RepositoryItem', itemId, { action: 'APPROVED', title: item.title });
+        } else if (approvalStatus === 'REJECTED') {
+            await logActivity(req.user.id, 'REVIEW', 'RepositoryItem', itemId, { action: 'REJECTED', title: item.title });
+        }
+
         res.status(200).json({ message: `Karya ilmiah berhasil di-${approvalStatus.toLowerCase()}.`, item: updatedItem });
     } catch (error) {
         next(error);
@@ -206,6 +213,7 @@ const addAdvisedStudent = async (req, res, next) => {
         }
 
         await prisma.bimbingan.create({ data: { dosenId, mahasiswaId: mahasiswa.id } });
+        await logActivity(req.user.id, 'CREATE', 'Bimbingan', mahasiswa.id, { studentName: mahasiswa.name, studentCode: userCode });
         res.status(201).json({ message: `Mahasiswa ${mahasiswa.name} berhasil ditambahkan.` });
     } catch (error) {
         next(error);
@@ -280,6 +288,7 @@ const assignSecondAdvisor = async (req, res, next) => {
             where: { id: itemId },
             data: { secondAdvisorId },
         });
+        await logActivity(req.user.id, 'ASSIGN', 'RepositoryItem', itemId, { secondAdvisorId });
         res.status(200).json({ message: 'Penguji kedua berhasil ditetapkan.', item: updatedItem });
     } catch (error) {
         next(error);

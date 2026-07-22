@@ -2,6 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const fs = require("fs");
 const path = require("path");
+const { logActivity } = require("../utils/activityLog");
 
 const getActiveBanners = async (req, res, next) => {
   try {
@@ -53,6 +54,7 @@ const createBanner = async (req, res, next) => {
       },
     });
 
+    await logActivity(req.user.id, 'CREATE', 'Banner', banner.id, { title: banner.title });
     res.status(201).json(banner);
   } catch (error) {
     next(error);
@@ -90,6 +92,7 @@ const updateBanner = async (req, res, next) => {
       data: dataToUpdate,
     });
 
+    await logActivity(req.user.id, 'UPDATE', 'Banner', id, { title: title || '...' });
     res.json(updated);
   } catch (error) {
     next(error);
@@ -110,6 +113,7 @@ const deleteBanner = async (req, res, next) => {
     }
 
     await prisma.banner.delete({ where: { id } });
+    await logActivity(req.user.id, 'DELETE', 'Banner', id, {});
     res.json({ message: "Banner berhasil dihapus." });
   } catch (error) {
     next(error);

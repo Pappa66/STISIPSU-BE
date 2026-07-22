@@ -70,6 +70,8 @@ app.use("/api/citation", require("./routes/citationRoutes"));
 app.use("/api/download", require("./routes/downloadRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 
+app.use("/api/activity-logs", require("./routes/activityLogRoutes"));
+
 // === Global Error Handler ===
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
 const prisma = new PrismaClient();
+const { logActivity } = require('../utils/activityLog');
 
 // --- FUNGSI UNTUK ADMIN ---
 
@@ -31,6 +32,7 @@ const createAnnouncement = async (req, res, next) => {
         expiresAt: expiresAt ? new Date(expiresAt) : null,
       },
     });
+    await logActivity(req.user.id, 'CREATE', 'Announcement', newAnnouncement.id, { title: newAnnouncement.title, type: newAnnouncement.type });
     res.status(201).json(newAnnouncement);
   } catch (error) {
     next(error);
@@ -53,6 +55,7 @@ const updateAnnouncement = async (req, res, next) => {
         expiresAt: expiresAt ? new Date(expiresAt) : null,
       },
     });
+    await logActivity(req.user.id, 'UPDATE', 'Announcement', id, { title: title || '...' });
     res.status(200).json(updatedAnnouncement);
   } catch (error) {
     next(error);
@@ -78,6 +81,7 @@ const deleteAnnouncement = async (req, res, next) => {
       where: { id },
     });
 
+    await logActivity(req.user.id, 'DELETE', 'Announcement', id, {});
     res.status(200).json({ message: 'Pengumuman berhasil dihapus.' });
   } catch (error) {
     next(error);

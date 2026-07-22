@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const { logActivity } = require("../utils/activityLog");
 
 // --- FUNGSI BARU UNTUK MEMBUAT POSTINGAN ---
 const createPost = async (req, res, next) => {
@@ -26,6 +27,7 @@ const createPost = async (req, res, next) => {
         ],
       },
     });
+    await logActivity(req.user.id, 'CREATE', 'Post', newPost.id, { title: newPost.title, type: newPost.type });
     res.status(201).json(newPost);
   } catch (error) {
     next(error);
@@ -124,6 +126,7 @@ const updatePost = async (req, res, next) => {
         tags,
       },
     });
+    await logActivity(req.user.id, 'UPDATE', 'Post', id, { title });
     res.json(updatedPost);
   } catch (error) {
     if (error.code === "P2025") {
@@ -148,6 +151,7 @@ const deletePost = async (req, res, next) => {
       });
       await tx.post.delete({ where: { id } });
     });
+    await logActivity(req.user.id, 'DELETE', 'Post', id, {});
     res.json({ message: "Post berhasil dihapus." });
   } catch (error) {
     if (error.code === "P2025")
