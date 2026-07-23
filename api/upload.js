@@ -24,11 +24,16 @@ async function optimizeImage(buffer, mimetype) {
       height = Math.round(height * ratio);
     }
 
-    const optimized = await sharp(buffer)
-      .resize(width, height, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 80, progressive: true })
-      .toBuffer();
+    const hasAlpha = metadata.channels === 4;
 
+    const pipeline = sharp(buffer).resize(width, height, { fit: 'inside', withoutEnlargement: true });
+
+    if (hasAlpha) {
+      const optimized = await pipeline.png({ quality: 80, palette: true }).toBuffer();
+      return { buffer: optimized, mimetype: 'image/png' };
+    }
+
+    const optimized = await pipeline.jpeg({ quality: 80, progressive: true }).toBuffer();
     return { buffer: optimized, mimetype: 'image/jpeg' };
   } catch (e) {
     return { buffer, mimetype };
