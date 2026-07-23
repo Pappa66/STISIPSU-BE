@@ -258,6 +258,19 @@ enum AnnouncementType {
   IMAGE
 }
 
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  eventDate   DateTime
+  endDate     DateTime?
+  type        String   @default("academic") // academic, holiday, exam, registration, other
+  color       String   @default("#0077c2")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Announcement {
   id        String   @id @default(cuid())
   title     String   // Judul pengumuman (hanya untuk referensi admin)

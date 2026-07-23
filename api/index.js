@@ -153,6 +153,8 @@ app.use('/api/citation', require('../src/routes/citationRoutes'));
 app.use('/api/notifications', require('../src/routes/notificationRoutes'));
 app.use('/api/backup', require('../src/routes/backupRoutes'));
 
+app.use('/api/calendar', require('../src/routes/calendarRoutes'));
+
 app.use('/api/activity-logs', require('../src/routes/activityLogRoutes'));
 
 app.use('/api/auth', require('../src/routes/googleAuthRoutes'));

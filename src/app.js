@@ -73,6 +73,8 @@ app.use("/api/citation", require("./routes/citationRoutes"));
 app.use("/api/download", require("./routes/downloadRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 
+app.use("/api/calendar", require("./routes/calendarRoutes"));
+
 app.use("/api/activity-logs", require("./routes/activityLogRoutes"));
 
 app.use("/api/auth", require("./routes/googleAuthRoutes"));
