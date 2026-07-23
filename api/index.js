@@ -46,7 +46,7 @@ app.post('/api/upload', protect, upload.single('upload'), async (req, res, next)
   if (!req.file) return res.status(400).json({ message: 'Tidak ada file yang diunggah.' });
   try {
     const { buffer, mimetype } = await optimizeImage(req.file.buffer, req.file.mimetype);
-    const fname = generateFilename(req.file.originalname);
+    const fname = generateFilename(req.file.originalname, mimetype);
     const url = await uploadToSupabase(buffer, fname, mimetype);
     res.status(201).json({ message: 'File berhasil diunggah', url });
   } catch (e) { next(e); }
@@ -66,7 +66,7 @@ app.post('/api/gallery/upload', protect, isAdmin, upload.array('galleryImages', 
     const images = await Promise.all(
       req.files.map(async (file, index) => {
         const { buffer, mimetype } = await optimizeImage(file.buffer, file.mimetype);
-        const fname = generateFilename(file.originalname);
+        const fname = generateFilename(file.originalname, mimetype);
         const url = await uploadToSupabase(buffer, fname, mimetype);
         return prisma.galleryImage.create({
           data: {
@@ -93,7 +93,7 @@ app.post('/api/banners', protect, isAdmin, upload.single('image'), async (req, r
     const lastBanner = await prisma.banner.findFirst({ orderBy: { order: 'desc' } });
     const nextOrder = lastBanner ? lastBanner.order + 1 : 0;
     const { buffer, mimetype } = await optimizeImage(req.file.buffer, req.file.mimetype);
-    const fname = generateFilename(req.file.originalname);
+    const fname = generateFilename(req.file.originalname, mimetype);
     const url = await uploadToSupabase(buffer, fname, mimetype);
     const banner = await prisma.banner.create({
       data: { title, subtitle: subtitle || null, imageUrl: url, linkUrl: linkUrl || null, order: nextOrder },
@@ -117,7 +117,7 @@ app.put('/api/banners/:id', protect, isAdmin, upload.single('image'), async (req
     if (order !== undefined) data.order = order;
     if (req.file) {
       const { buffer, mimetype } = await optimizeImage(req.file.buffer, req.file.mimetype);
-      const fname = generateFilename(req.file.originalname);
+      const fname = generateFilename(req.file.originalname, mimetype);
       data.imageUrl = await uploadToSupabase(buffer, fname, mimetype);
     }
     const updated = await prisma.banner.update({ where: { id }, data });

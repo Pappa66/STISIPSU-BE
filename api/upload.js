@@ -3,9 +3,12 @@ const path = require('path');
 const crypto = require('crypto');
 const sharp = require('sharp');
 
-function generateFilename(originalname) {
-  const ext = path.extname(originalname);
+function generateFilename(originalname, mimetype) {
   const unique = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+  if (mimetype === 'image/png') return `${unique}.png`;
+  if (mimetype === 'image/webp') return `${unique}.webp`;
+  if (mimetype === 'image/jpeg') return `${unique}.jpg`;
+  const ext = path.extname(originalname);
   return `${unique}${ext}`;
 }
 

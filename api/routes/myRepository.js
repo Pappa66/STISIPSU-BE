@@ -45,7 +45,7 @@ router.post('/', upload.array('files', 10), async (req, res, next) => {
       const fileData = await Promise.all(
         files.map(async (file) => {
           const { buffer, mimetype } = await optimizeImage(file.buffer, file.mimetype);
-          const fname = generateFilename(file.originalname);
+          const fname = generateFilename(file.originalname, mimetype);
           const url = await uploadToSupabase(buffer, fname, mimetype);
           const meta = parsedFilesMetadata.find((m) => m.originalName === file.originalname);
           return {
@@ -102,7 +102,7 @@ router.put('/:id', upload.array('files', 10), async (req, res, next) => {
       const fileData = await Promise.all(
         files.map(async (file) => {
           const { buffer, mimetype } = await optimizeImage(file.buffer, file.mimetype);
-          const fname = generateFilename(file.originalname);
+          const fname = generateFilename(file.originalname, mimetype);
           const url = await uploadToSupabase(buffer, fname, mimetype);
           const meta = parsedFilesMetadata.find((m) => m.originalName === file.originalname);
           return {
