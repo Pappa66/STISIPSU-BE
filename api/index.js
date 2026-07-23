@@ -157,6 +157,9 @@ app.use('/api/calendar', require('../src/routes/calendarRoutes'));
 
 app.use('/api/activity-logs', require('../src/routes/activityLogRoutes'));
 
+app.use('/api/hero', require('../src/routes/heroRoutes'));
+app.use('/api/public/hero', publicLimiter, require('../src/routes/publicHeroRoutes'));
+
 app.use('/api/auth', require('../src/routes/googleAuthRoutes'));
 
 // === Error Handler ===
