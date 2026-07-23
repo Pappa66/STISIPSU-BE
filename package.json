@@ -9,6 +9,7 @@
     "start:prod": "node dist/src/app.js",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
+    "vercel-build": "tsc -p tsconfig.json && cp -r public dist/public && cp -r prisma dist/prisma",
     "migrate": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts"
   },
