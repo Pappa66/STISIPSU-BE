@@ -2,10 +2,10 @@
 
 Express + Prisma + PostgreSQL (Neon) backend for STISIP Syamsul Ulum Sukabumi.
 
-Kode ini mendukung dual-mode deployment: **VPS** (self-managed) atau **Vercel** (serverless) tanpa perubahan kode. \
-Awalnya berjalan di VPS (`145.79.8.29:3000`) menggunakan Docker, lalu dimigrasi ke Vercel + Neon + Supabase.
+**Deploy utama: VPS** (PM2 + Nginx). Alternatif: Vercel (serverless). \
+Kode ini dual-mode — tanpa perubahan kode untuk kedua platform.
 
-> Panduan deploy lengkap (Vercel + VPS) ada di `DEPLOY.md` di root proyek.
+> Panduan deploy lengkap ada di `DEPLOY.md` (root proyek).
 
 ## Setup
 
@@ -57,20 +57,17 @@ prisma/          # Schema + migrations
 
 ## Deploy
 
-Panduan deploy lengkap (Vercel + VPS) ada di `DEPLOY.md` di root proyek.
+Panduan deploy lengkap (VPS + Vercel) ada di `DEPLOY.md` (root proyek).
 
-### Vercel (Production)
-Push ke `main`, Vercel auto-deploy. Pastikan environment variables terisi di dashboard Vercel.
-
-### VPS (Alternatif)
+### VPS (Produksi)
 ```bash
 git clone https://github.com/Pappa66/STISIPSU-BE.git /var/www/api
 cd /var/www/api && npm install
 cp .env.example .env && nano .env
-npx prisma migrate deploy
+npx prisma migrate deploy && npm run seed
 pm2 start src/app.js --name stisip-api && pm2 save && pm2 startup
 ```
+Lihat `DEPLOY.md` untuk setup Nginx, SSL, firewall lengkap.
 
-### Catatan
-- Migrations tidak jalan otomatis di Vercel — jalankan `npx prisma migrate deploy` manual setelah deploy jika ada migrasi baru.
-- Lihat `DEPLOY.md` untuk setup Nginx, SSL, dan firewall lengkap.
+### Vercel (Alternatif / Preview)
+Push ke `main`, Vercel auto-deploy. Migrations tidak jalan otomatis — jalankan `npx prisma migrate deploy` manual jika ada migrasi baru.
