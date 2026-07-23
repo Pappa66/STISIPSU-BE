@@ -77,6 +77,9 @@ app.use("/api/calendar", require("./routes/calendarRoutes"));
 
 app.use("/api/activity-logs", require("./routes/activityLogRoutes"));
 
+app.use("/api/hero", require("./routes/heroRoutes"));
+app.use("/api/public/hero", publicLimiter, require("./routes/publicHeroRoutes"));
+
 app.use("/api/auth", require("./routes/googleAuthRoutes"));
 
 // === Global Error Handler ===
