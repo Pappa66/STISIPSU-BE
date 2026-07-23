@@ -1,9 +1,10 @@
 # STISIPSU Backend
 
-Express + Prisma + PostgreSQL (Neon) backend for STISIP Syamsul Ulum Sukabumi.
+Express + Prisma backend for STISIP Syamsul Ulum Sukabumi.
 
-**Deploy utama: VPS** (PM2 + Nginx). Alternatif: Vercel (serverless). \
-Kode ini dual-mode — tanpa perubahan kode untuk kedua platform.
+**Deploy utama: VPS** (PM2 + Nginx + PostgreSQL lokal). \
+**Alternatif: Vercel** (serverless + Neon). \
+Kode ini dual-mode — tanpa perubahan kode.
 
 > Panduan deploy lengkap ada di `DEPLOY.md` (root proyek).
 
@@ -21,7 +22,7 @@ npm run dev
 
 | Variable | Wajib | Kegunaan |
 |---|---|---|
-| `DATABASE_URL` | Ya | PostgreSQL (Neon) connection string |
+| `DATABASE_URL` | Ya | PostgreSQL connection string (VPS: `postgresql://user:pass@localhost:5432/stisip`, Vercel: dari Neon) |
 | `JWT_SECRET` | Ya | Secret key untuk JWT token |
 | `NEXT_PUBLIC_API_URL` | Ya | Base URL backend (e.g. `https://api.stisipsu.ac.id/`) |
 | `SUPABASE_URL` | Untuk upload | Supabase storage bucket URL |
@@ -59,15 +60,22 @@ prisma/          # Schema + migrations
 
 Panduan deploy lengkap (VPS + Vercel) ada di `DEPLOY.md` (root proyek).
 
-### VPS (Produksi)
+### VPS (Produksi — Utama)
 ```bash
+# Setup database dulu (lihat DEPLOY.md)
+sudo -u postgres psql -c "CREATE DATABASE stisip;"
+sudo -u postgres psql -c "CREATE USER stisip_user WITH PASSWORD '...';"
+sudo -u postgres psql -c "GRANT ALL ON DATABASE stisip TO stisip_user;"
+
+# Clone & run
 git clone https://github.com/Pappa66/STISIPSU-BE.git /var/www/api
 cd /var/www/api && npm install
-cp .env.example .env && nano .env
+cp .env.example .env && nano .env   # DATABASE_URL=postgresql://stisip_user:...@localhost:5432/stisip
 npx prisma migrate deploy && npm run seed
 pm2 start src/app.js --name stisip-api && pm2 save && pm2 startup
 ```
 Lihat `DEPLOY.md` untuk setup Nginx, SSL, firewall lengkap.
 
-### Vercel (Alternatif / Preview)
-Push ke `main`, Vercel auto-deploy. Migrations tidak jalan otomatis — jalankan `npx prisma migrate deploy` manual jika ada migrasi baru.
+### Vercel (Alternatif — Preview)
+Push ke `main`, Vercel auto-deploy. Database pakai **Neon**. \
+Migrations tidak jalan otomatis — jalankan `npx prisma migrate deploy` manual jika ada migrasi baru.
