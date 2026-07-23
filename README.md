@@ -3,7 +3,9 @@
 Express + Prisma + PostgreSQL (Neon) backend for STISIP Syamsul Ulum Sukabumi.
 
 Kode ini mendukung dual-mode deployment: **VPS** (self-managed) atau **Vercel** (serverless) tanpa perubahan kode. \
-Awalnya berjalan di VPS (`145.79.8.29:3000`) menggunakan Docker, lalu dimigrasi ke Vercel + Neon + Supabase untuk kemudahan maintenance.
+Awalnya berjalan di VPS (`145.79.8.29:3000`) menggunakan Docker, lalu dimigrasi ke Vercel + Neon + Supabase.
+
+> Panduan deploy lengkap (Vercel + VPS) ada di `DEPLOY.md` di root proyek.
 
 ## Setup
 
@@ -21,7 +23,7 @@ npm run dev
 |---|---|---|
 | `DATABASE_URL` | Ya | PostgreSQL (Neon) connection string |
 | `JWT_SECRET` | Ya | Secret key untuk JWT token |
-| `NEXT_PUBLIC_API_URL` | Ya | Base URL backend (e.g. `https://stisipsu-be.vercel.app/`) |
+| `NEXT_PUBLIC_API_URL` | Ya | Base URL backend (e.g. `https://api.stisipsu.ac.id/`) |
 | `SUPABASE_URL` | Untuk upload | Supabase storage bucket URL |
 | `SUPABASE_KEY` | Untuk upload | Supabase anon/service key |
 | `UPSTASH_REDIS_URL` | Opsional | Redis URL untuk rate limiting distribusi (Vercel) |
@@ -53,80 +55,22 @@ api/             # Vercel serverless entry point (overrides)
 prisma/          # Schema + migrations
 ```
 
-## Deploy ke VPS (Ubuntu/Debian)
+## Deploy
 
-### 1. Prasyarat
-- Node.js 20+ (`curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash - && sudo apt install -y nodejs`)
-- PM2 untuk process manager (`npm install -g pm2`)
-- Nginx sebagai reverse proxy
-- Domain mengarah ke IP VPS
+Panduan deploy lengkap (Vercel + VPS) ada di `DEPLOY.md` di root proyek.
 
-### 2. Clone & Setup
+### Vercel (Production)
+Push ke `main`, Vercel auto-deploy. Pastikan environment variables terisi di dashboard Vercel.
 
+### VPS (Alternatif)
 ```bash
 git clone https://github.com/Pappa66/STISIPSU-BE.git /var/www/api
-cd /var/www/api
-npm install
-cp .env.example .env
-nano .env   # isi semua environment variables
+cd /var/www/api && npm install
+cp .env.example .env && nano .env
 npx prisma migrate deploy
-pm2 start src/app.js --name stisip-api
-pm2 save
-pm2 startup   # ikuti instruksi untuk enable on reboot
+pm2 start src/app.js --name stisip-api && pm2 save && pm2 startup
 ```
 
-### 3. Nginx Reverse Proxy
-
-```nginx
-server {
-    listen 80;
-    server_name api.stisipsu.ac.id;  # ganti dengan domain kamu
-
-    location / {
-        proxy_pass http://localhost:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        client_max_body_size 100M;
-    }
-}
-```
-
-```bash
-sudo ln -s /etc/nginx/sites-available/stisip-api /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-### 4. SSL (HTTPS) dengan Certbot
-
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d api.stisipsu.ac.id
-```
-
-### 5. Maintenance
-
-```bash
-pm2 logs stisip-api          # lihat log real-time
-pm2 restart stisip-api       # restart setelah update kode
-git pull origin main && npm install && npx prisma migrate deploy && pm2 restart stisip-api
-```
-
-### 6. Firewall
-
-```bash
-sudo ufw allow 22/tcp        # SSH
-sudo ufw allow 80/tcp        # HTTP
-sudo ufw allow 443/tcp       # HTTPS
-sudo ufw enable
-```
-
-## Deploy ke Vercel
-
-Push ke `main`, Vercel auto-deploy. Pastikan environment variables terisi di dashboard Vercel.
-Migrations tidak jalan otomatis — jalankan `npx prisma migrate deploy` manual setelah deploy jika ada migrasi baru.
+### Catatan
+- Migrations tidak jalan otomatis di Vercel — jalankan `npx prisma migrate deploy` manual setelah deploy jika ada migrasi baru.
+- Lihat `DEPLOY.md` untuk setup Nginx, SSL, dan firewall lengkap.
