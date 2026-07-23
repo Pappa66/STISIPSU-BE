@@ -82,6 +82,50 @@ app.post('/api/gallery/upload', protect, isAdmin, upload.array('galleryImages', 
   } catch (e) { next(e); }
 });
 
+// Banner overrides (Vercel: memory storage + Supabase instead of local disk)
+const { logActivity } = require('../src/utils/activityLog');
+
+app.post('/api/banners', protect, isAdmin, upload.single('image'), async (req, res, next) => {
+  const { title, subtitle, linkUrl } = req.body;
+  if (!title || !title.trim()) return res.status(400).json({ message: 'Judul banner wajib diisi.' });
+  if (!req.file) return res.status(400).json({ message: 'Gambar banner wajib diupload.' });
+  try {
+    const lastBanner = await prisma.banner.findFirst({ orderBy: { order: 'desc' } });
+    const nextOrder = lastBanner ? lastBanner.order + 1 : 0;
+    const { buffer, mimetype } = await optimizeImage(req.file.buffer, req.file.mimetype);
+    const fname = generateFilename(req.file.originalname);
+    const url = await uploadToSupabase(buffer, fname, mimetype);
+    const banner = await prisma.banner.create({
+      data: { title, subtitle: subtitle || null, imageUrl: url, linkUrl: linkUrl || null, order: nextOrder },
+    });
+    await logActivity(req.user.id, 'CREATE', 'Banner', banner.id, { title: banner.title });
+    res.status(201).json(banner);
+  } catch (e) { next(e); }
+});
+
+app.put('/api/banners/:id', protect, isAdmin, upload.single('image'), async (req, res, next) => {
+  const { id } = req.params;
+  const { title, subtitle, linkUrl, isActive, order } = req.body;
+  try {
+    const existing = await prisma.banner.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ message: 'Banner tidak ditemukan.' });
+    const data = {};
+    if (title !== undefined) data.title = title;
+    if (subtitle !== undefined) data.subtitle = subtitle;
+    if (linkUrl !== undefined) data.linkUrl = linkUrl;
+    if (isActive !== undefined) data.isActive = isActive;
+    if (order !== undefined) data.order = order;
+    if (req.file) {
+      const { buffer, mimetype } = await optimizeImage(req.file.buffer, req.file.mimetype);
+      const fname = generateFilename(req.file.originalname);
+      data.imageUrl = await uploadToSupabase(buffer, fname, mimetype);
+    }
+    const updated = await prisma.banner.update({ where: { id }, data });
+    await logActivity(req.user.id, 'UPDATE', 'Banner', id, { title: title || '...' });
+    res.json(updated);
+  } catch (e) { next(e); }
+});
+
 // Repository & MyRepository overrides (full route replacements)
 app.use('/api/repository-items', publicLimiter, require('./routes/repository'));
 app.use('/api/my-repository', require('./routes/myRepository'));
