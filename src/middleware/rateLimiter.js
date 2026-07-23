@@ -9,7 +9,7 @@ const createRateLimiter = ({
   message = 'Terlalu banyak permintaan. Coba lagi nanti.',
   keyPrefix = 'rl',
 } = {}) => {
-  const config: any = {
+  const config = {
     windowMs,
     max,
     message: { status: 429, message },

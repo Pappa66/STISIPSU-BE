@@ -10,7 +10,7 @@ const { logActivity } = require("../utils/activityLog");
 const getPublicRepositoryItems = async (req, res, next) => {
   try {
     const { year, studyProgram, search } = req.query;
-    const whereClause: any = {
+    const whereClause = {
       visibility: "PUBLISHED",
       approvalStatus: "APPROVED",
     };

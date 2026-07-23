@@ -81,7 +81,7 @@ const updateMenuItem = async (req, res, next) => {
     const { id } = req.params;
     const { name, type, href, icon } = req.body;
     try {
-        const dataToUpdate: any = { name, type, href, icon };
+        const dataToUpdate = { name, type, href, icon };
         if (type === 'INTERNAL') dataToUpdate.href = null;
         else if (type === 'EXTERNAL' || type === 'STATIC_PATH') dataToUpdate.postId = null;
 

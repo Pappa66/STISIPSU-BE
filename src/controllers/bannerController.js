@@ -72,7 +72,7 @@ const updateBanner = async (req, res, next) => {
       return res.status(404).json({ message: "Banner tidak ditemukan." });
     }
 
-    const dataToUpdate: any = {};
+    const dataToUpdate = {};
     if (title !== undefined) dataToUpdate.title = title;
     if (subtitle !== undefined) dataToUpdate.subtitle = subtitle;
     if (linkUrl !== undefined) dataToUpdate.linkUrl = linkUrl;

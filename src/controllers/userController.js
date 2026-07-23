@@ -91,7 +91,7 @@ const getLecturers = async (req, res, next) => {
 const getStudents = async (req, res, next) => {
     try {
         const { search, studyProgram, entryYear } = req.query;
-        const whereClause: any = {
+        const whereClause = {
             role: 'MAHASISWA', // Filter WAJIB
             AND: [],
         };
@@ -108,7 +108,7 @@ const getStudents = async (req, res, next) => {
         if (studyProgram && studyProgram !== 'ALL') whereClause.AND.push({ studyProgram });
         if (entryYear && !Number.isNaN(parseInt(entryYear, 10))) whereClause.AND.push({ entryYear: parseInt(entryYear, 10) });
 
-        if ((whereClause.AND as any[]).length === 0) delete whereClause.AND;
+        if (whereClause.AND.length === 0) delete whereClause.AND;
 
         const users = await prisma.user.findMany({
             where: whereClause,
@@ -163,7 +163,7 @@ const createUser = async (req, res, next) => {
         await logActivity(req.user.id, 'CREATE', 'User', user.id, { name: user.name, role: user.role });
         res.status(201).json({ message: `Pengguna '${user.name}' berhasil dibuat dengan kode: ${user.userCode}`, user });
     } catch (error) {
-        if ((error as any).code === 'P2002') return res.status(400).json({ message: 'Email atau Kode Pengguna sudah terdaftar.' });
+        if (error.code === 'P2002') return res.status(400).json({ message: 'Email atau Kode Pengguna sudah terdaftar.' });
         next(error);
     }
 };
@@ -171,7 +171,7 @@ const updateUser = async (req, res, next) => {
     const { id } = req.params;
     const { name, email, role, studyProgram, npm, entryYear, npd } = req.body;
     try {
-        const dataToUpdate: any = { name, email, role, studyProgram, npm, npd };
+        const dataToUpdate = { name, email, role, studyProgram, npm, npd };
         if (entryYear !== undefined) dataToUpdate.entryYear = parseInt(entryYear, 10);
         if (role !== 'MAHASISWA') { dataToUpdate.studyProgram = null; dataToUpdate.npm = null; dataToUpdate.entryYear = null; }
         if (role !== 'DOSEN') { dataToUpdate.npd = null; }
@@ -214,7 +214,7 @@ const bulkCreateUsers = async (req, res, next) => {
     }
 
     let createdCount = 0;
-    const errors: string[] = [];
+    const errors = [];
 
     for (const user of usersData) {
         try {
@@ -250,10 +250,10 @@ const bulkCreateUsers = async (req, res, next) => {
             });
             createdCount++;
         } catch (error) {
-            if ((error as any).code === 'P2002') {
+            if (error.code === 'P2002') {
                 errors.push(`Email atau Kode Pengguna untuk '${user.name}' sudah ada.`);
             } else {
-                errors.push(`Error untuk '${user.name}': ${(error as any).message}`);
+                errors.push(`Error untuk '${user.name}': ${error.message}`);
             }
         }
     }

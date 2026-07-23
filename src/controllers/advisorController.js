@@ -236,7 +236,7 @@ const addAdvisedStudentsFromExcel = async (req, res, next) => {
         const worksheet = workbook.Sheets[sheetName];
         const data = xlsx.utils.sheet_to_json(worksheet);
 
-        const results: any = { success: [], alreadyExists: [], notFound: [] };
+        const results = { success: [], alreadyExists: [], notFound: [] };
 
         for (const row of data) {
             const userCode = row.KODE_PENGGUNA || row.userCode;

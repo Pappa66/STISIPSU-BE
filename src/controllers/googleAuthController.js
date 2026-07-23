@@ -23,7 +23,7 @@ const googleLogin = async (req, res, next) => {
       return res.status(401).json({ message: 'Token Google tidak valid.' });
     }
 
-    const payload: any = await response.json();
+    const payload = await response.json();
 
     if (payload.aud !== clientId) {
       return res.status(401).json({ message: 'Token tidak cocok dengan aplikasi ini.' });

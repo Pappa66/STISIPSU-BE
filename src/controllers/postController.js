@@ -129,7 +129,7 @@ const updatePost = async (req, res, next) => {
     await logActivity(req.user.id, 'UPDATE', 'Post', id, { title });
     res.json(updatedPost);
   } catch (error) {
-    if ((error as any).code === "P2025") {
+    if (error.code === "P2025") {
       return res.status(404).json({ message: "Postingan tidak ditemukan." });
     }
     next(error);
@@ -154,7 +154,7 @@ const deletePost = async (req, res, next) => {
     await logActivity(req.user.id, 'DELETE', 'Post', id, {});
     res.json({ message: "Post berhasil dihapus." });
   } catch (error) {
-    if ((error as any).code === "P2025")
+    if (error.code === "P2025")
       return res.status(404).json({ message: "Post tidak ditemukan." });
     next(error);
   }
