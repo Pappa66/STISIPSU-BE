@@ -75,6 +75,8 @@ app.use("/api/notifications", require("./routes/notificationRoutes"));
 
 app.use("/api/activity-logs", require("./routes/activityLogRoutes"));
 
+app.use("/api/auth", require("./routes/googleAuthRoutes"));
+
 // === Global Error Handler ===
 app.use((err, req, res, next) => {
   console.error(err.stack);

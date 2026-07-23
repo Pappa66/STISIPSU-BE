@@ -2,7 +2,7 @@ const Redis = require('ioredis');
 
 const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || null;
 
-let redis = null;
+let redis: any = null;
 
 if (REDIS_URL) {
   try {

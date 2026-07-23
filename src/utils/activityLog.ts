@@ -7,7 +7,7 @@ async function logActivity(userId, action, entity, entityId = null, details = nu
       data: { userId, action, entity, entityId, details: details || undefined },
     });
   } catch (error) {
-    console.error('Gagal mencatat aktivitas:', error.message);
+    console.error('Gagal mencatat aktivitas:', (error as any).message);
   }
 }
 

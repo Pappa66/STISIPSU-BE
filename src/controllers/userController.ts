@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { logActivity } = require('../utils/activityLog');
+const { validatePassword } = require('../utils/passwordValidator');
 
 const prisma = new PrismaClient();
 
@@ -90,7 +91,7 @@ const getLecturers = async (req, res, next) => {
 const getStudents = async (req, res, next) => {
     try {
         const { search, studyProgram, entryYear } = req.query;
-        const whereClause = {
+        const whereClause: any = {
             role: 'MAHASISWA', // Filter WAJIB
             AND: [],
         };
@@ -107,7 +108,7 @@ const getStudents = async (req, res, next) => {
         if (studyProgram && studyProgram !== 'ALL') whereClause.AND.push({ studyProgram });
         if (entryYear && !Number.isNaN(parseInt(entryYear, 10))) whereClause.AND.push({ entryYear: parseInt(entryYear, 10) });
 
-        if (whereClause.AND.length === 0) delete whereClause.AND;
+        if ((whereClause.AND as any[]).length === 0) delete whereClause.AND;
 
         const users = await prisma.user.findMany({
             where: whereClause,
@@ -140,6 +141,8 @@ const createUser = async (req, res, next) => {
     const { name, email, password, role, studyProgram, npm, entryYear, npd } = req.body;
     try {
         if (!name || !email || !password || !role) return res.status(400).json({ message: "Field dasar wajib diisi." });
+    const pwError = validatePassword(password);
+    if (pwError) return res.status(400).json({ message: pwError });
         if (role === 'MAHASISWA' && (!studyProgram || !npm || !entryYear)) return res.status(400).json({ message: "NPM, Tahun Masuk, dan Prodi wajib diisi untuk mahasiswa." });
         if (role === 'DOSEN' && !npd) return res.status(400).json({ message: "NPD/NIDN wajib diisi untuk dosen." });
 
@@ -160,7 +163,7 @@ const createUser = async (req, res, next) => {
         await logActivity(req.user.id, 'CREATE', 'User', user.id, { name: user.name, role: user.role });
         res.status(201).json({ message: `Pengguna '${user.name}' berhasil dibuat dengan kode: ${user.userCode}`, user });
     } catch (error) {
-        if (error.code === 'P2002') return res.status(400).json({ message: 'Email atau Kode Pengguna sudah terdaftar.' });
+        if ((error as any).code === 'P2002') return res.status(400).json({ message: 'Email atau Kode Pengguna sudah terdaftar.' });
         next(error);
     }
 };
@@ -168,7 +171,7 @@ const updateUser = async (req, res, next) => {
     const { id } = req.params;
     const { name, email, role, studyProgram, npm, entryYear, npd } = req.body;
     try {
-        const dataToUpdate = { name, email, role, studyProgram, npm, npd };
+        const dataToUpdate: any = { name, email, role, studyProgram, npm, npd };
         if (entryYear !== undefined) dataToUpdate.entryYear = parseInt(entryYear, 10);
         if (role !== 'MAHASISWA') { dataToUpdate.studyProgram = null; dataToUpdate.npm = null; dataToUpdate.entryYear = null; }
         if (role !== 'DOSEN') { dataToUpdate.npd = null; }
@@ -194,7 +197,9 @@ const deleteUser = async (req, res, next) => {
 const resetPassword = async (req, res, next) => {
     const { id } = req.params;
     const { password } = req.body;
-    if (!password || password.length < 6) return res.status(400).json({ message: 'Password baru minimal 6 karakter' });
+    if (!password) return res.status(400).json({ message: 'Password baru wajib diisi' });
+    const pwError = validatePassword(password);
+    if (pwError) return res.status(400).json({ message: pwError });
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         await prisma.user.update({ where: { id }, data: { password: hashedPassword } });
@@ -209,13 +214,18 @@ const bulkCreateUsers = async (req, res, next) => {
     }
 
     let createdCount = 0;
-    const errors = [];
+    const errors: string[] = [];
 
     for (const user of usersData) {
         try {
             const { name, email, password, role, studyProgram, npm, entryYear, npd } = user;
             if (!name || !email || !password || !role) {
                 errors.push(`Data tidak lengkap untuk email: ${email || 'tidak ada'}`);
+                continue;
+            }
+            const pwErr = validatePassword(password);
+            if (pwErr) {
+                errors.push(`Password untuk '${name}' tidak memenuhi syarat: ${pwErr}`);
                 continue;
             }
             if (role === 'MAHASISWA' && (!studyProgram || !npm || !entryYear)) {
@@ -240,10 +250,10 @@ const bulkCreateUsers = async (req, res, next) => {
             });
             createdCount++;
         } catch (error) {
-            if (error.code === 'P2002') {
+            if ((error as any).code === 'P2002') {
                 errors.push(`Email atau Kode Pengguna untuk '${user.name}' sudah ada.`);
             } else {
-                errors.push(`Error untuk '${user.name}': ${error.message}`);
+                errors.push(`Error untuk '${user.name}': ${(error as any).message}`);
             }
         }
     }
@@ -279,9 +289,8 @@ const changeMyPassword = async (req, res, next) => {
     if (!oldPassword || !newPassword) {
         return res.status(400).json({ message: 'Password lama dan baru wajib diisi.' });
     }
-    if (newPassword.length < 6) {
-        return res.status(400).json({ message: 'Password baru minimal harus 6 karakter.' });
-    }
+    const pwError = validatePassword(newPassword);
+    if (pwError) return res.status(400).json({ message: pwError });
     try {
         const user = await prisma.user.findUnique({ where: { id: req.user.id } });
         if (user && (await bcrypt.compare(oldPassword, user.password))) {

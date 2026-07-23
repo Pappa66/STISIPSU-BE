@@ -20,7 +20,8 @@ async function main() {
   console.log('Data lama berhasil dihapus.');
 
   // --- 1. Buat Pengguna ---
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  // Password: Stisip2025! (memenuhi aturan: min 8, huruf besar, huruf kecil, simbol)
+  const hashedPassword = await bcrypt.hash('Stisip2025!', 10);
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@stisipsu.ac.id',

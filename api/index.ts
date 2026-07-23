@@ -111,6 +111,8 @@ app.use('/api/backup', require('../src/routes/backupRoutes'));
 
 app.use('/api/activity-logs', require('../src/routes/activityLogRoutes'));
 
+app.use('/api/auth', require('../src/routes/googleAuthRoutes'));
+
 // === Error Handler ===
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -1,3 +1,4 @@
+// @ts-nocheck
 const { PrismaClient } = require('@prisma/client');
 const https = require('https');
 const http = require('http');

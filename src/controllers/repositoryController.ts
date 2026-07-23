@@ -10,7 +10,7 @@ const { logActivity } = require("../utils/activityLog");
 const getPublicRepositoryItems = async (req, res, next) => {
   try {
     const { year, studyProgram, search } = req.query;
-    const whereClause = {
+    const whereClause: any = {
       visibility: "PUBLISHED",
       approvalStatus: "APPROVED",
     };
@@ -294,11 +294,8 @@ const deleteRepositoryItem = async (req, res, next) => {
   }
 };
 
-console.log("?? Mencoba ambil statistik repo");
-
 const getRepositoryStats = async (req, res, next) => {
   try {
-    console.log("?? Querying data...");
     const [totalRepositories, totalFiles, totalUsers, items] =
       await Promise.all([
         prisma.repositoryItem.count({
@@ -318,11 +315,6 @@ const getRepositoryStats = async (req, res, next) => {
         }),
       ]);
 
-    console.log("?? totalRepositories:", totalRepositories);
-    console.log("?? totalFiles:", totalFiles);
-    console.log("?? totalUsers:", totalUsers);
-    console.log("?? totalItems:", items.length);
-
     const authorsSet = new Set(
       items.map((item) =>
         typeof item.author === "string"
@@ -340,7 +332,6 @@ const getRepositoryStats = async (req, res, next) => {
       totalAuthors,
     });
   } catch (error) {
-    console.error("? Gagal ambil statistik:", error);
     next(error);
   }
 };

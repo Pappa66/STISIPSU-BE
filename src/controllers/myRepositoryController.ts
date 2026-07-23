@@ -63,7 +63,7 @@ const createMyItem = async (req, res, next) => {
     if (isNaN(parsedYear))
       return res.status(400).json({ message: "Tahun harus berupa angka." });
 
-    let filesToCreate = [];
+    let filesToCreate: any[] = [];
     if (gdriveLink) {
       filesToCreate.push({
         alias: "Link Google Drive",
@@ -153,7 +153,7 @@ const updateMyItem = async (req, res, next) => {
       return res.status(400).json({ message: "Tahun harus berupa angka." });
     }
 
-    let newFiles = [];
+    let newFiles: any[] = [];
     if (gdriveLink) {
       newFiles.push({
         alias: "Link Google Drive",
@@ -183,7 +183,7 @@ const updateMyItem = async (req, res, next) => {
             fs.unlinkSync(filePath);
           }
         } catch (err) {
-          console.error(`Gagal hapus file lama: ${filePath}`, err.message);
+          console.error(`Gagal hapus file lama: ${filePath}`, (err as any).message);
         }
       }
     }

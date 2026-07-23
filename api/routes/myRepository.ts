@@ -31,7 +31,7 @@ router.post('/', upload.array('files', 10), async (req, res, next) => {
     const parsedYear = parseInt(year);
     if (isNaN(parsedYear)) return res.status(400).json({ message: 'Tahun harus berupa angka.' });
 
-    let filesToCreate = [];
+    let filesToCreate: any[] = [];
     if (gdriveLink) {
       filesToCreate.push({
         alias: 'Link Google Drive',
@@ -92,7 +92,7 @@ router.put('/:id', upload.array('files', 10), async (req, res, next) => {
     const parsedYear = parseInt(year);
     if (isNaN(parsedYear)) return res.status(400).json({ message: 'Tahun harus berupa angka.' });
 
-    let newFiles = [];
+    let newFiles: any[] = [];
     if (gdriveLink) {
       newFiles.push({ alias: 'Link Google Drive', fileName: 'gdrive_link', fileUrl: gdriveLink });
     }
