@@ -10,7 +10,7 @@ const {
 const { protect, isAdmin } = require("../middleware/authMiddleware");
 
 router.get("/", getPublicEvents);
-router.get("/admin/all", protect, isAdmin, getAllEvents);
+router.get("/admin/all", protect, getAllEvents);
 router.post("/", protect, isAdmin, createEvent);
 router.put("/:id", protect, isAdmin, updateEvent);
 router.delete("/:id", protect, isAdmin, deleteEvent);

@@ -132,6 +132,27 @@ async function main() {
   });
   console.log('Pengumuman berhasil dibuat.');
 
+  // --- 7. Buat Kalender Pendidikan ---
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  
+  await prisma.calendarEvent.createMany({
+    data: [
+      { title: 'Hari pertama masuk sekolah', eventDate: new Date(y, 6, 14), type: 'academic', color: '#0077c2', isActive: true },
+      { title: 'Masa Pengenalan Akademik', eventDate: new Date(y, 6, 14), endDate: new Date(y, 6, 18), type: 'academic', color: '#0077c2', isActive: true },
+      { title: 'Perkuliahan Semester Ganjil', eventDate: new Date(y, 6, 21), endDate: new Date(y, 11, 12), type: 'academic', color: '#0077c2', isActive: true },
+      { title: 'Hari Kemerdekaan RI', eventDate: new Date(y, 7, 17), type: 'holiday', color: '#e53935', isActive: true },
+      { title: 'UTS Semester Ganjil', eventDate: new Date(y, 9, 6), endDate: new Date(y, 9, 17), type: 'exam', color: '#fb8c00', isActive: true },
+      { title: 'UAS Semester Ganjil', eventDate: new Date(y, 11, 1), endDate: new Date(y, 11, 12), type: 'exam', color: '#fb8c00', isActive: true },
+      { title: 'Libur Semester Ganjil', eventDate: new Date(y, 11, 15), endDate: new Date(y + 1, 0, 31), type: 'holiday', color: '#e53935', isActive: true },
+      { title: 'Pendaftaran Mahasiswa Baru', eventDate: new Date(y, 4, 1), endDate: new Date(y, 6, 14), type: 'registration', color: '#43a047', isActive: true },
+      { title: 'Tahun Baru', eventDate: new Date(y + 1, 0, 1), type: 'holiday', color: '#e53935', isActive: true },
+      { title: 'Perkuliahan Semester Genap', eventDate: new Date(y + 1, 1, 2), endDate: new Date(y + 1, 5, 27), type: 'academic', color: '#0077c2', isActive: true },
+    ],
+  });
+  console.log('Kalender pendidikan berhasil dibuat.');
+
   console.log('Proses seeding selesai.');
 }
 
